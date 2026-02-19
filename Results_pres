@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CoWN SHA — Year-End Standings</title>
+<title>CoWN — Year-End Standings</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{--bg:#F4F6F9;--card:#fff;--text:#0A0A0A;--muted:#5C6370;--accent:#1B3A6B;--al:#E8EEF6;--ad:#0F2440;--green:#166534;--gl:#DFFBE8;--red:#991B1B;--rl:#FEE8E8;--blue:#1B3A6B;--bl:#E8EEF6;--bor:#D1D5DB;--qual:#DBEAFE;--qualText:#1E40AF}
