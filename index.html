@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CoWN — Year-End Standings</title>
+<title>CoWN SHA — Year-End Standings</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{--bg:#F4F6F9;--card:#fff;--text:#0A0A0A;--muted:#5C6370;--accent:#1B3A6B;--al:#E8EEF6;--ad:#0F2440;--green:#166534;--gl:#DFFBE8;--red:#991B1B;--rl:#FEE8E8;--blue:#1B3A6B;--bl:#E8EEF6;--bor:#D1D5DB;--qual:#DBEAFE;--qualText:#1E40AF}
@@ -48,7 +48,7 @@ h3{font-size:1.1rem;font-weight:700;margin-bottom:.6rem}.mini-card{background:va
 <div id="admin-view" class="hidden"></div>
 </main>
 <script>
-const YEARLY={proxyUrl:'https://script.google.com/macros/s/AKfycbxRF5XTAYc97qjjaa27vwxj44o_vL6yV3cAtLkP_FpVxxnWEozQ1ThHgZk61nR7555roA/exec',settingsPassword:'cown2026'};
+const YEARLY={proxyUrl:'https://script.google.com/macros/s/AKfycbyynLobKl0xR3946DawzfakdUkR4MsAfEkSUnoyEZzofq2DD4HymR3k7cYlp3xehNVhcw/exec',settingsPassword:'cown2026'};
 const CONFIG={
   allDivs:["Open","Non-Pro","Open Jr Horse","NP Jr Horse","Limited","Non Pro Boxing","Intermediate","Novice","L1 Novice","Youth","Novice Youth","Open Ranch Riding","Am Ranch Riding","Youth Ranch Riding"],
   ranchDivs:["Open Ranch Riding","Am Ranch Riding","Youth Ranch Riding"],
@@ -309,48 +309,53 @@ function renderSearch(){
     res.slice(0,50).forEach(r=>{const isQ=r.totalShows>=CONFIG.qualShows;h+='<tr'+(isQ?' class="row-qual"':'')+'><td>'+esc(r.division)+'</td><td>'+esc(r.class)+'</td><td class="ctr bold">'+r.place+'</td><td class="bold">'+esc(r.rider)+(isQ?'<span class="qual-badge">✓ YE</span>':"")+'</td><td>'+esc(r.horse)+'</td><td class="ctr">'+r.totalShows+'</td><td class="ctr bold">'+fmt(r.yearEndPts)+'</td></tr>';});
     h+='</tbody></table></div></div>';out.innerHTML=h;});}
 
+function buildShtxGroups(){
+  const groups={};
+  S.shtxEntries.forEach(e=>{const k=e.rider.toLowerCase()+'|||'+e.horse.toLowerCase();if(!groups[k])groups[k]={rider:e.rider,horse:e.horse,owner:e.owner||(S.ownerMap[e.horse.toLowerCase()]||""),events:[]};groups[k].events.push(e.division+' — '+e.class);});
+  return Object.values(groups).sort(lastNameSort);}
+
 function renderShtx(){
   const el=document.getElementById("shtx-view");
   if(!S.shtxEntries.length){el.innerHTML='<p class="empty">No SHTX qualifier data found</p>';return;}
-  const sorted=[...S.shtxEntries].sort(lastNameSort);
+  const sorted=buildShtxGroups();
   let h='<div class="rules-banner"><strong>•</strong> '+esc(CONFIG.shtxRules)+'</div>';
-  h+='<div class="stats"><div class="stat stat-blue"><div class="stat-val">'+sorted.length+'</div><div class="stat-lbl">Total Qualifications</div></div></div>';
+  h+='<div class="stats"><div class="stat stat-blue"><div class="stat-val">'+S.shtxEntries.length+'</div><div class="stat-lbl">Total Qualifications</div></div><div class="stat stat-dark"><div class="stat-val">'+sorted.length+'</div><div class="stat-lbl">Rider / Horse Combos</div></div></div>';
   h+='<div class="search-wrap"><span class="search-icon">🔍</span><input class="search-box" id="shtx-si" placeholder="Filter by rider or horse..."></div><div id="shtx-list"></div>';
   el.innerHTML=h;
   function render(f){
     const fl=f?f.toLowerCase():"";
-    const filt=fl?sorted.filter(e=>e.rider.toLowerCase().includes(fl)||e.horse.toLowerCase().includes(fl)):sorted;
-    let t='<div class="card"><div class="scroll-table"><table><thead><tr><th class="left">Rider</th><th class="left">Horse</th><th class="left">Owner</th><th class="left">Division</th><th class="left">Class</th></tr></thead><tbody>';
-    filt.forEach(e=>{
-      const owner=e.owner||(S.ownerMap[e.horse.toLowerCase()]||"");
-      t+='<tr><td class="bold">'+esc(e.rider)+'</td><td>'+esc(e.horse)+'</td><td style="color:var(--muted)">'+esc(owner!==e.rider?owner:"")+'</td><td>'+esc(e.division)+'</td><td>'+esc(e.class)+'</td></tr>';});
+    const filt=fl?sorted.filter(g=>g.rider.toLowerCase().includes(fl)||g.horse.toLowerCase().includes(fl)):sorted;
+    let t='<div class="card"><div class="scroll-table"><table><thead><tr><th class="left">Rider</th><th class="left">Horse</th><th class="left">Owner</th><th class="left" style="min-width:250px">Qualified Events</th><th>#</th></tr></thead><tbody>';
+    filt.forEach(g=>{
+      const owner=g.owner!==g.rider?g.owner:"";
+      t+='<tr><td class="bold" style="white-space:nowrap">'+esc(g.rider)+'</td><td style="white-space:nowrap">'+esc(g.horse)+'</td><td style="color:var(--muted);white-space:nowrap">'+esc(owner)+'</td><td style="white-space:normal;font-size:.78rem;line-height:1.6">'+g.events.map(e=>'<span style="background:#F0F0F0;padding:2px 7px;border-radius:4px;margin:2px;display:inline-block">'+esc(e)+'</span>').join(' ')+'</td><td class="ctr bold">'+g.events.length+'</td></tr>';});
     t+='</tbody></table></div></div>';document.getElementById("shtx-list").innerHTML=filt.length?t:'<p class="empty">No matches</p>';}
   render("");document.getElementById("shtx-si").addEventListener("input",function(){render(this.value.trim());});}
 
 function renderShtxAdmin(){
   const el=document.getElementById("shtx-admin-view");
   if(!S.shtxEntries.length){el.innerHTML='<p class="empty">No SHTX qualifier data</p>';return;}
-  const sorted=[...S.shtxEntries].sort(lastNameSort);
+  const sorted=buildShtxGroups();
   const memCount=Math.floor(Object.keys(S.members).length/2);
-  let matched=0;sorted.forEach(e=>{if(lookupEmail(e.rider))matched++;});
+  let matched=0;sorted.forEach(g=>{if(lookupEmail(g.rider))matched++;});
   let h='<h3>📧 SHTX Qualifiers with Emails</h3>';
-  h+='<div class="stats"><div class="stat stat-blue"><div class="stat-val">'+sorted.length+'</div><div class="stat-lbl">Qualifications</div></div><div class="stat stat-green"><div class="stat-val">'+matched+'</div><div class="stat-lbl">Emails Found</div></div><div class="stat stat-red"><div class="stat-val">'+(sorted.length-matched)+'</div><div class="stat-lbl">No Email</div></div><div class="stat stat-dark"><div class="stat-val">'+memCount+'</div><div class="stat-lbl">Members Loaded</div></div></div>';
+  h+='<div class="stats"><div class="stat stat-blue"><div class="stat-val">'+sorted.length+'</div><div class="stat-lbl">Rider / Horse Combos</div></div><div class="stat stat-green"><div class="stat-val">'+matched+'</div><div class="stat-lbl">Emails Found</div></div><div class="stat stat-red"><div class="stat-val">'+(sorted.length-matched)+'</div><div class="stat-lbl">No Email</div></div><div class="stat stat-dark"><div class="stat-val">'+memCount+'</div><div class="stat-lbl">Members Loaded</div></div></div>';
   h+='<div style="margin-bottom:1rem"><button class="btn btn-accent" id="shtx-admin-export">📋 Copy with Emails</button></div>';
   h+='<div class="search-wrap"><span class="search-icon">🔍</span><input class="search-box" id="shtx-admin-si" placeholder="Filter..."></div><div id="shtx-admin-list"></div>';
   el.innerHTML=h;
   function render(f){
     const fl=f?f.toLowerCase():"";
-    const filt=fl?sorted.filter(e=>e.rider.toLowerCase().includes(fl)||e.horse.toLowerCase().includes(fl)):sorted;
-    let t='<div class="card"><div class="scroll-table"><table><thead><tr><th class="left">Rider</th><th class="left">Email</th><th class="left">Horse</th><th class="left">Owner</th><th class="left">Division</th><th class="left">Class</th></tr></thead><tbody>';
-    filt.forEach(e=>{
-      const email=lookupEmail(e.rider);
-      const owner=e.owner||(S.ownerMap[e.horse.toLowerCase()]||"");
-      t+='<tr><td class="bold">'+esc(e.rider)+'</td><td style="font-size:.78rem">'+(email?esc(email):'<span style="color:var(--red)">—</span>')+'</td><td>'+esc(e.horse)+'</td><td style="color:var(--muted)">'+esc(owner!==e.rider?owner:"")+'</td><td>'+esc(e.division)+'</td><td>'+esc(e.class)+'</td></tr>';});
+    const filt=fl?sorted.filter(g=>g.rider.toLowerCase().includes(fl)||g.horse.toLowerCase().includes(fl)):sorted;
+    let t='<div class="card"><div class="scroll-table"><table><thead><tr><th class="left">Rider</th><th class="left">Email</th><th class="left">Horse</th><th class="left">Owner</th><th class="left" style="min-width:200px">Events</th><th>#</th></tr></thead><tbody>';
+    filt.forEach(g=>{
+      const email=lookupEmail(g.rider);
+      const owner=g.owner!==g.rider?g.owner:"";
+      t+='<tr><td class="bold" style="white-space:nowrap">'+esc(g.rider)+'</td><td style="font-size:.78rem;white-space:nowrap">'+(email?esc(email):'<span style="color:var(--red)">—</span>')+'</td><td style="white-space:nowrap">'+esc(g.horse)+'</td><td style="color:var(--muted);white-space:nowrap">'+esc(owner)+'</td><td style="white-space:normal;font-size:.78rem;line-height:1.6">'+g.events.map(e=>'<span style="background:#F0F0F0;padding:2px 7px;border-radius:4px;margin:2px;display:inline-block">'+esc(e)+'</span>').join(' ')+'</td><td class="ctr bold">'+g.events.length+'</td></tr>';});
     t+='</tbody></table></div></div>';document.getElementById("shtx-admin-list").innerHTML=filt.length?t:'<p class="empty">No matches</p>';}
   render("");document.getElementById("shtx-admin-si").addEventListener("input",function(){render(this.value.trim());});
   document.getElementById("shtx-admin-export").addEventListener("click",function(){
-    const rows=[["Rider","Email","Horse","Owner","Division","Class"]];
-    sorted.forEach(e=>{const email=lookupEmail(e.rider);const owner=e.owner||(S.ownerMap[e.horse.toLowerCase()]||"");rows.push([e.rider,email,e.horse,owner,e.division,e.class]);});
+    const rows=[["Rider","Email","Horse","Owner","Events","Count"]];
+    sorted.forEach(g=>{const email=lookupEmail(g.rider);const owner=g.owner!==g.rider?g.owner:"";rows.push([g.rider,email,g.horse,owner,g.events.join("; "),g.events.length]);});
     navigator.clipboard.writeText(rows.map(r=>r.join("\t")).join("\n")).then(()=>{this.textContent="✓ Copied!";setTimeout(()=>{this.textContent="📋 Copy with Emails";},2000);});});}
 
 function renderEligibility(){
