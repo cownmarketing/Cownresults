@@ -605,6 +605,7 @@ function renderMerit(){
   h+='<div class="stat" style="background:#FEF3C7"><div class="stat-val" style="color:#92400E">'+newQualCount+'</div><div class="stat-lbl">Newly Qualifying ★</div></div>';
   h+='</div>';
 
+  h+='<div style="margin-bottom:1rem"><button class="btn btn-accent" id="merit-export">📋 Copy Table</button></div>';
   h+='<div class="search-wrap"><span class="search-icon">🔍</span><input class="search-box" id="merit-si" placeholder="Filter by name or horse..."></div><div id="merit-list"></div>';
   el.innerHTML=h;
 
@@ -636,6 +637,16 @@ function renderMerit(){
     document.getElementById("merit-list").innerHTML=filt.length?t:'<p class="empty">No matches</p>';}
   renderList("");
   document.getElementById("merit-si").addEventListener("input",function(){renderList(this.value.trim());});
+  document.getElementById("merit-export").addEventListener("click",function(){
+    const hdr=[isOpen?"Horse":"Rider","Horse",...years,"5yr Total","Status","Notes"];
+    if(isOpen)hdr.splice(1,1);
+    const rows=[hdr];
+    processed.forEach(e=>{
+      const row=isOpen?[e.horse]:[e.name,e.horse];
+      years.forEach(y=>{row.push(e.years[y]||0);});
+      row.push(e.total5);row.push(e.status);row.push(e.awarded);
+      rows.push(row);});
+    navigator.clipboard.writeText(rows.map(r=>r.join("\t")).join("\n")).then(()=>{this.textContent="✓ Copied!";setTimeout(()=>{this.textContent="📋 Copy Table";},2000);});});
   el.querySelectorAll(".pill").forEach(b=>b.addEventListener("click",()=>{S.selMeritDiv=b.dataset.mdiv;renderMerit();}));}
 
 function renderAdmin(){
