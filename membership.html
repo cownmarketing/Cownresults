@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CoWN Membership Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0F1923;--card:#1A2733;--accent:#D4A04A;--accent2:#C17F24;--green:#27AE60;--red:#E74C3C;--yellow:#F39C12;--text:#E8DCC8;--muted:#8A9AAD;--bor:#2A3A4A;--al:rgba(212,160,74,.12)}
+body{font-family:'Source Sans 3',sans-serif;background:var(--bg);color:var(--text);padding:0 1rem 2rem}
+h2{font-family:'Oswald',sans-serif;font-weight:700}
+.hdr{text-align:center;padding:1.2rem 0 .5rem;border-bottom:1px solid var(--bor);margin-bottom:1rem}
+.hdr h1{font-family:'Oswald',sans-serif;font-size:1.5rem;color:var(--accent);letter-spacing:.08em;text-transform:uppercase}
+.hdr p{font-size:.8rem;color:var(--muted)}
+.tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem;border-bottom:1px solid var(--bor);padding-bottom:.5rem}
+.tab{background:none;border:none;color:var(--muted);font-family:'Oswald',sans-serif;font-size:.95rem;cursor:pointer;padding:.4rem .8rem;border-radius:6px;transition:all .2s}
+.tab:hover{color:var(--text)}
+.tab.active{background:var(--al);color:var(--accent)}
+.view{display:none}.view.active{display:block}
+.card{background:var(--card);border:1px solid var(--bor);border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+.card-hdr{margin-bottom:1rem}
+.card-hdr h2{font-size:1.2rem;color:var(--accent)}
+.card-hdr p{font-size:.8rem;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.75rem;margin-bottom:1rem}
+.stat{background:var(--card);border:1px solid var(--bor);border-radius:10px;padding:1rem;text-align:center}
+.stat .num{font-family:'Oswald',sans-serif;font-size:2rem;font-weight:700}
+.stat .lbl{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.stat.active-stat .num{color:var(--green)}
+.stat.warn-stat .num{color:var(--yellow)}
+.stat.lapsed-stat .num{color:var(--red)}
+.stat.total-stat .num{color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th{text-align:left;padding:.5rem;border-bottom:2px solid var(--bor);color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+td{padding:.45rem .5rem;border-bottom:1px solid rgba(42,58,74,.5)}
+tr:hover{background:rgba(212,160,74,.05)}
+.ctr{text-align:center}
+.bold{font-weight:600}
+.left{text-align:left}
+.badge{display:inline-block;padding:.1rem .4rem;border-radius:4px;font-size:.7rem;font-weight:600;letter-spacing:.02em}
+.badge-active{background:rgba(39,174,96,.15);color:var(--green)}
+.badge-lapsed{background:rgba(231,76,60,.12);color:var(--red)}
+.badge-expiring{background:rgba(243,156,18,.15);color:var(--yellow)}
+.badge-general{background:rgba(212,160,74,.15);color:var(--accent)}
+.badge-youth{background:rgba(155,89,182,.15);color:#B97FD0}
+.badge-business{background:rgba(52,152,219,.15);color:#5DADE2}
+.badge-collegiate{background:rgba(26,188,156,.15);color:#48C9B0}
+.search-wrap{position:relative;margin-bottom:1rem}
+.search-icon{position:absolute;left:.75rem;top:50%;transform:translateY(-50%);font-size:.9rem}
+.search-box{width:100%;padding:.6rem .6rem .6rem 2.2rem;background:var(--card);border:1px solid var(--bor);border-radius:8px;color:var(--text);font-size:.9rem;outline:none}
+.search-box:focus{border-color:var(--accent)}
+.pills{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1rem}
+.pill{background:var(--card);border:1px solid var(--bor);border-radius:20px;padding:.3rem .8rem;font-size:.8rem;cursor:pointer;color:var(--muted);transition:all .2s}
+.pill:hover{border-color:var(--accent);color:var(--text)}
+.pill.active{background:var(--al);border-color:var(--accent);color:var(--accent);font-weight:600}
+.btn{padding:.45rem 1rem;border-radius:8px;border:none;cursor:pointer;font-size:.82rem;font-weight:600;transition:all .2s}
+.btn-accent{background:var(--accent);color:var(--bg)}.btn-accent:hover{background:var(--accent2)}
+.btn-dark{background:var(--card);color:var(--text);border:1px solid var(--bor)}.btn-dark:hover{border-color:var(--accent)}
+.btn-green{background:var(--green);color:#fff}.btn-green:hover{background:#219A52}
+.btn-red{background:var(--red);color:#fff}.btn-red:hover{background:#C0392B}
+.btn-sm{padding:.3rem .6rem;font-size:.75rem}
+.hidden{display:none!important}
+.empty{text-align:center;padding:2rem;color:var(--muted);font-size:.9rem}
+.toggle-row{display:flex;align-items:center;gap:.75rem;padding:.4rem 0}
+.toggle{position:relative;display:inline-block;width:40px;height:22px}
+.toggle input{display:none}
+.slider{position:absolute;cursor:pointer;inset:0;background:var(--bor);border-radius:22px;transition:.3s}
+.slider:before{content:"";position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:var(--text);border-radius:50%;transition:.3s}
+.toggle input:checked+.slider{background:var(--accent)}
+.toggle input:checked+.slider:before{transform:translateX(18px)}
+.loading-view{text-align:center;padding:3rem}
+.spinner{display:inline-block;width:30px;height:30px;border:3px solid var(--bor);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.note{font-size:.75rem;color:var(--muted);font-style:italic;margin-top:.5rem}
+.pwd-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:999}
+.pwd-box{background:var(--card);border:1px solid var(--bor);border-radius:12px;padding:2rem;text-align:center;max-width:320px;width:90%}
+.pwd-box h3{font-family:'Oswald',sans-serif;color:var(--accent);margin-bottom:1rem}
+.pwd-box input{width:100%;padding:.5rem;background:var(--bg);border:1px solid var(--bor);border-radius:6px;color:var(--text);margin-bottom:.75rem;text-align:center}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:998}
+.modal{background:var(--card);border:1px solid var(--bor);border-radius:12px;padding:1.5rem;max-width:500px;width:90%;max-height:80vh;overflow-y:auto}
+.modal h3{font-family:'Oswald',sans-serif;color:var(--accent);margin-bottom:1rem}
+.modal label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:.25rem;margin-top:.75rem}
+.modal input,.modal select{width:100%;padding:.45rem;background:var(--bg);border:1px solid var(--bor);border-radius:6px;color:var(--text);font-size:.85rem}
+.modal .btn-row{display:flex;gap:.5rem;justify-content:flex-end;margin-top:1.25rem}
+/* Membership card styling */
+.mem-card{background:white;border-radius:12px;padding:1.5rem;max-width:400px;margin:0 auto;text-align:center;color:#1a1a1a;border:2px solid #D4A04A}
+.mem-card .logo-area{font-family:'Oswald',sans-serif;font-size:1.1rem;color:#1a4a7a;letter-spacing:.1em;margin-bottom:.75rem;padding-bottom:.75rem;border-bottom:2px solid #D4A04A}
+.mem-card .logo-area .big{font-size:2.2rem;font-weight:700;color:#1a4a7a;line-height:1}
+.mem-card .logo-area .sub{font-size:.6rem;letter-spacing:.2em;color:#888}
+.mem-card .mem-name{font-family:'Oswald',sans-serif;font-size:1.5rem;font-weight:700;color:#1a1a1a;margin:.5rem 0 .25rem}
+.mem-card .mem-num{font-size:.9rem;color:#555;margin-bottom:.75rem}
+.mem-card .mem-info{display:flex;justify-content:space-between;padding:.5rem 1rem;background:#f5f1eb;border-radius:8px;font-size:.85rem;font-weight:600}
+.mem-card .mem-type{color:#D4A04A}
+.mem-card .mem-exp{color:#555}
+.ct{font-size:.7rem;opacity:.7}
+@media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}}
+@media print{body{background:white;padding:0}.hdr,.tabs{display:none}.mem-card{border:2px solid #D4A04A;box-shadow:none}}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <h1>CoWN Membership Hub</h1>
+  <p id="status-line">Loading...</p>
+</div>
+
+<div id="tabs" class="tabs"></div>
+
+<div id="pwd-gate" class="pwd-overlay hidden">
+  <div class="pwd-box">
+    <h3>🔒 Admin Access</h3>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">Enter the admin password</p>
+    <input type="password" id="pwd-input" placeholder="Password">
+    <button class="btn btn-accent" id="pwd-btn" style="width:100%">Unlock</button>
+  </div>
+</div>
+
+<div id="loading-view" class="view active">
+  <div class="loading-view"><div class="spinner"></div><p style="margin-top:1rem;color:var(--muted)">Loading membership data...</p></div>
+</div>
+
+<div id="lookup-view" class="view"></div>
+<div id="dashboard-view" class="view"></div>
+<div id="expiring-view" class="view"></div>
+<div id="cards-view" class="view"></div>
+<div id="settings-view" class="view"></div>
+
+<div id="modal-root"></div>
+
+<script>
+const CONFIG={
+  proxyUrl:'https://script.google.com/macros/s/AKfycbwXLdb99SHdfAtEtA-PYv2qGelD1TbRaDQ7G9QXrFBIcz9LCouxHkVX7sN9ZRbg_88TZA/exec',
+  emailProxyUrl:'PASTE_YOUR_EMAIL_SCRIPT_URL_HERE',
+  password:'cown2026',
+  types:['General','Youth','Collegiate','Business'],
+  statuses:['Active','Lapsed']
+};
+
+let S={
+  view:'loading',members:[],filtered:[],
+  searchQ:'',filterStatus:'all',filterType:'all',
+  adminUnlocked:false,sortCol:'last',sortDir:'asc',
+  pendingView:null
+};
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmtDate(d){if(!d)return'—';if(d instanceof Date){const m=d.getMonth()+1,dy=d.getDate(),y=d.getFullYear();return m+'/'+dy+'/'+y;}const s=String(d);if(s.includes('-')){const p=s.split('T')[0].split('-');return parseInt(p[1])+'/'+parseInt(p[2])+'/'+p[0];}return s;}
+function fmtPhone(p){if(!p)return'';const s=String(p).replace(/[^0-9]/g,'').replace(/\.0$/,'');if(s.length===10)return'('+s.slice(0,3)+') '+s.slice(3,6)+'-'+s.slice(6);return s;}
+function parseDate(v){if(!v)return null;if(v instanceof Date)return v;const s=String(v);if(s.includes('-')){const d=new Date(s);return isNaN(d)?null:d;}return null;}
+function daysBetween(a,b){return Math.round((b-a)/(1000*60*60*24));}
+
+function parseMemberData(wb){
+  const members=[];
+  const shName=wb.SheetNames.find(n=>n.toLowerCase().includes('membership'))||wb.SheetNames[0];
+  const raw=XLSX.utils.sheet_to_json(wb.Sheets[shName],{defval:null,raw:false});
+  for(const row of raw){
+    const lk={};for(const k of Object.keys(row))lk[k.toLowerCase().trim()]=row[k];
+    const first=(lk.first||'').toString().trim();
+    const last=(lk.last||'').toString().trim();
+    if(!first&&!last)continue;
+    const cownNum=parseInt(lk['cown #'])||0;
+    const type=(lk.type||'General').toString().trim();
+    const status=(lk.status||'Lapsed').toString().trim();
+    const duration=parseInt(lk.duration)||1;
+    const renewalDate=parseDate(lk['renewal date']);
+    const expDate=parseDate(lk['expiration date']);
+    const email=(lk.recipient||lk.email||'').toString().trim();
+    const phone=(lk['phone number']||'').toString().replace(/\.0$/,'').trim();
+    const address=(lk.address||'').toString().trim();
+    const city=(lk.city||'').toString().trim();
+    const state=(lk.state||'').toString().trim();
+    const zip=(lk['zip code']||'').toString().trim();
+    const youthDOB=parseDate(lk['youth dob']);
+    const age=parseInt(lk.age)||null;
+    const l1Status=(lk['l1 status/free year']||'').toString().trim();
+    const method=(lk['o']||'').toString().trim().toLowerCase();
+    const sent=(lk.sent||'').toString().trim();
+    const shtx2025=lk['check to shtx for 2025']||'';
+    const shtx2024=lk['check to shtx for 24']||'';
+    const shtx2023=lk['check to shtx for 23']||'';
+    const was2022=lk['2022 member']||'';
+    const was2023=lk['2023 member']||'';
+
+    // Compute derived status
+    const now=new Date();
+    let computedStatus=status;
+    if(expDate){
+      if(expDate<now&&status==='Active')computedStatus='Lapsed';
+      if(expDate>=now&&status==='Lapsed')computedStatus='Active';
+    }
+    const daysToExp=expDate?daysBetween(now,expDate):null;
+    const expiring=computedStatus==='Active'&&daysToExp!==null&&daysToExp<=60&&daysToExp>=0;
+
+    members.push({
+      first,last,fullName:first+' '+last,cownNum,type:type.charAt(0).toUpperCase()+type.slice(1).toLowerCase(),
+      status:computedStatus,duration,renewalDate,expDate,
+      email,phone,address,city,state,zip,
+      youthDOB,age,l1Status,method:method==='o'?'Online':method==='ip'?'In Person':'',
+      cardSent:!!sent,cardSentDate:sent,
+      shtx2025,shtx2024,shtx2023,was2022,was2023,
+      daysToExp,expiring
+    });
+  }
+  return members.sort((a,b)=>a.last.localeCompare(b.last)||a.first.localeCompare(b.first));
+}
+
+function getStats(){
+  const m=S.members;
+  const active=m.filter(x=>x.status==='Active').length;
+  const expiring=m.filter(x=>x.expiring).length;
+  const lapsed=m.filter(x=>x.status==='Lapsed').length;
+  const noEmail=m.filter(x=>x.status==='Active'&&!x.email).length;
+  return{total:m.length,active,expiring,lapsed,noEmail};
+}
+
+function applyFilters(){
+  let f=S.members;
+  if(S.filterStatus!=='all')f=f.filter(m=>S.filterStatus==='expiring'?m.expiring:m.status===S.filterStatus);
+  if(S.filterType!=='all')f=f.filter(m=>m.type.toLowerCase()===S.filterType.toLowerCase());
+  if(S.searchQ){
+    const q=S.searchQ.toLowerCase();
+    f=f.filter(m=>m.first.toLowerCase().includes(q)||m.last.toLowerCase().includes(q)||m.fullName.toLowerCase().includes(q)||String(m.cownNum).includes(q)||m.email.toLowerCase().includes(q));
+  }
+  // Sort
+  f.sort((a,b)=>{
+    let va,vb;
+    switch(S.sortCol){
+      case'first':va=a.first;vb=b.first;break;
+      case'last':va=a.last;vb=b.last;break;
+      case'cownNum':return S.sortDir==='asc'?a.cownNum-b.cownNum:b.cownNum-a.cownNum;
+      case'type':va=a.type;vb=b.type;break;
+      case'status':va=a.status;vb=b.status;break;
+      case'expDate':va=a.expDate||new Date(0);vb=b.expDate||new Date(0);return S.sortDir==='asc'?va-vb:vb-va;
+      case'renewalDate':va=a.renewalDate||new Date(0);vb=b.renewalDate||new Date(0);return S.sortDir==='asc'?va-vb:vb-va;
+      default:va=a.last;vb=b.last;
+    }
+    const r=String(va).localeCompare(String(vb));
+    return S.sortDir==='asc'?r:-r;
+  });
+  S.filtered=f;
+}
+
+function typeBadge(t){
+  const lo=(t||'').toLowerCase();
+  if(lo==='youth')return'<span class="badge badge-youth">Youth</span>';
+  if(lo==='collegiate')return'<span class="badge badge-collegiate">Collegiate</span>';
+  if(lo==='business')return'<span class="badge badge-business">Business</span>';
+  return'<span class="badge badge-general">General</span>';
+}
+function statusBadge(m){
+  if(m.expiring)return'<span class="badge badge-expiring">Expiring</span>';
+  if(m.status==='Active')return'<span class="badge badge-active">Active</span>';
+  return'<span class="badge badge-lapsed">Lapsed</span>';
+}
+function sortIcon(col){
+  if(S.sortCol!==col)return'';
+  return S.sortDir==='asc'?' ▲':' ▼';
+}
+
+// ===== VIEWS =====
+
+function renderTabs(){
+  const tabs=[{id:'lookup',l:'🔍 Member Lookup'}];
+  if(S.adminUnlocked){
+    tabs.push({id:'dashboard',l:'📊 Dashboard'});
+    tabs.push({id:'expiring',l:'⚠️ Renewals'});
+    tabs.push({id:'cards',l:'🪪 Cards'});
+    tabs.push({id:'settings',l:'⚙️ Settings'});
+  }
+  document.getElementById('tabs').innerHTML=tabs.map(t=>'<button class="tab'+(S.view===t.id?' active':'')+'" data-view="'+t.id+'">'+t.l+'</button>').join('');
+  document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
+}
+
+function showView(id){
+  const adminViews=['dashboard','expiring','cards','settings'];
+  if(adminViews.includes(id)&&!S.adminUnlocked){
+    S.pendingView=id;
+    document.getElementById('pwd-gate').classList.remove('hidden');
+    document.getElementById('pwd-input').focus();
+    return;
+  }
+  S.view=id;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  const el=document.getElementById(id+'-view');
+  if(el)el.classList.add('active');
+  renderTabs();
+  switch(id){
+    case'lookup':renderLookup();break;
+    case'dashboard':renderDashboard();break;
+    case'expiring':renderExpiring();break;
+    case'cards':renderCards();break;
+    case'settings':renderSettings();break;
+  }
+}
+
+function renderLookup(){
+  const el=document.getElementById('lookup-view');
+  let h='<div class="card"><div class="card-hdr"><h2>Member Lookup</h2><p>Search by name or CoWN member number</p></div>';
+  h+='<div class="search-wrap"><span class="search-icon">🔍</span><input class="search-box" id="lookup-q" placeholder="Enter name or CoWN #..."></div>';
+  h+='<div id="lookup-results"></div></div>';
+  el.innerHTML=h;
+  const input=document.getElementById('lookup-q');
+  input.addEventListener('input',function(){
+    const q=this.value.trim().toLowerCase();
+    const res=document.getElementById('lookup-results');
+    if(!q||q.length<2){res.innerHTML='<p class="empty">Type at least 2 characters to search</p>';return;}
+    const matches=S.members.filter(m=>m.first.toLowerCase().includes(q)||m.last.toLowerCase().includes(q)||m.fullName.toLowerCase().includes(q)||String(m.cownNum)===q);
+    if(!matches.length){res.innerHTML='<p class="empty">No members found</p>';return;}
+    let t='';
+    matches.slice(0,20).forEach(m=>{
+      t+='<div style="background:var(--bg);border:1px solid var(--bor);border-radius:8px;padding:1rem;margin-bottom:.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem">';
+      t+='<div><strong style="font-size:1.05rem">'+esc(m.fullName)+'</strong>';
+      t+='<span style="margin-left:.75rem;font-size:.85rem;color:var(--muted)">CoWN #'+m.cownNum+'</span></div>';
+      t+='<div style="display:flex;gap:.5rem;align-items:center">'+typeBadge(m.type)+statusBadge(m);
+      t+='<span style="font-size:.8rem;color:var(--muted)">Exp: '+fmtDate(m.expDate)+'</span>';
+      t+='<button class="btn btn-dark btn-sm view-card-btn" data-num="'+m.cownNum+'">View Card</button>';
+      t+='</div></div>';
+    });
+    if(matches.length>20)t+='<p class="note">Showing first 20 of '+matches.length+' results</p>';
+    res.innerHTML=t;
+    res.querySelectorAll('.view-card-btn').forEach(b=>b.addEventListener('click',()=>{
+      const num=parseInt(b.dataset.num);
+      const mem=S.members.find(m=>m.cownNum===num);
+      if(mem)showCardModal(mem);
+    }));
+  });
+  input.focus();
+}
+
+function renderDashboard(){
+  const el=document.getElementById('dashboard-view');
+  const st=getStats();
+  let h='<div class="stats">';
+  h+='<div class="stat total-stat"><div class="num">'+st.total+'</div><div class="lbl">Total Members</div></div>';
+  h+='<div class="stat active-stat"><div class="num">'+st.active+'</div><div class="lbl">Active</div></div>';
+  h+='<div class="stat warn-stat"><div class="num">'+st.expiring+'</div><div class="lbl">Expiring ≤60d</div></div>';
+  h+='<div class="stat lapsed-stat"><div class="num">'+st.lapsed+'</div><div class="lbl">Lapsed</div></div>';
+  h+='</div>';
+  // Filters
+  h+='<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem">';
+  h+='<div class="pills">';
+  ['all','Active','Lapsed','expiring'].forEach(s=>{
+    const lbl=s==='all'?'All':s==='expiring'?'⚠️ Expiring':s;
+    h+='<button class="pill'+(S.filterStatus===s?' active':'')+'" data-fs="'+s+'">'+lbl+'</button>';
+  });
+  h+='</div><div class="pills">';
+  ['all','General','Youth','Collegiate','Business'].forEach(t=>{
+    h+='<button class="pill'+(S.filterType===t?' active':'')+'" data-ft="'+t+'">'+(t==='all'?'All Types':t)+'</button>';
+  });
+  h+='</div></div>';
+  h+='<div class="search-wrap"><span class="search-icon">🔍</span><input class="search-box" id="dash-q" placeholder="Search members..." value="'+esc(S.searchQ)+'"></div>';
+  // Table
+  applyFilters();
+  h+='<div style="overflow-x:auto"><table><thead><tr>';
+  const cols=[['last','Last'],['first','First'],['cownNum','#'],['type','Type'],['status','Status'],['expDate','Expires'],['renewalDate','Renewed'],['email','Email'],['method','Method']];
+  cols.forEach(([c,l])=>{h+='<th class="'+(c==='email'?'left':'')+'" style="cursor:pointer" data-sort="'+c+'">'+l+sortIcon(c)+'</th>';});
+  h+='<th></th></tr></thead><tbody>';
+  S.filtered.slice(0,200).forEach(m=>{
+    h+='<tr>';
+    h+='<td class="bold">'+esc(m.last)+'</td>';
+    h+='<td>'+esc(m.first)+'</td>';
+    h+='<td class="ctr">'+m.cownNum+'</td>';
+    h+='<td class="ctr">'+typeBadge(m.type)+'</td>';
+    h+='<td class="ctr">'+statusBadge(m)+'</td>';
+    h+='<td class="ctr" style="'+(m.expiring?'color:var(--yellow);font-weight:600':'')+'">'+fmtDate(m.expDate)+'</td>';
+    h+='<td class="ctr">'+fmtDate(m.renewalDate)+'</td>';
+    h+='<td style="font-size:.75rem">'+esc(m.email)+'</td>';
+    h+='<td class="ctr" style="font-size:.75rem">'+esc(m.method)+'</td>';
+    h+='<td><button class="btn btn-dark btn-sm detail-btn" data-num="'+m.cownNum+'">View</button></td>';
+    h+='</tr>';
+  });
+  if(!S.filtered.length)h+='<tr><td colspan="10" class="empty">No members match filters</td></tr>';
+  h+='</tbody></table></div>';
+  if(S.filtered.length>200)h+='<p class="note">Showing first 200 of '+S.filtered.length+' results</p>';
+  h+='<p class="note">'+S.filtered.length+' members shown</p>';
+  el.innerHTML=h;
+  // Wire events
+  document.getElementById('dash-q').addEventListener('input',function(){S.searchQ=this.value.trim();renderDashboard();});
+  el.querySelectorAll('[data-fs]').forEach(b=>b.addEventListener('click',()=>{S.filterStatus=b.dataset.fs;renderDashboard();}));
+  el.querySelectorAll('[data-ft]').forEach(b=>b.addEventListener('click',()=>{S.filterType=b.dataset.ft;renderDashboard();}));
+  el.querySelectorAll('[data-sort]').forEach(th=>th.addEventListener('click',()=>{
+    const col=th.dataset.sort;
+    if(S.sortCol===col)S.sortDir=S.sortDir==='asc'?'desc':'asc';
+    else{S.sortCol=col;S.sortDir='asc';}
+    renderDashboard();
+  }));
+  el.querySelectorAll('.detail-btn').forEach(b=>b.addEventListener('click',()=>{
+    const mem=S.members.find(m=>m.cownNum===parseInt(b.dataset.num));
+    if(mem)showDetailModal(mem);
+  }));
+}
+
+function renderExpiring(){
+  const el=document.getElementById('expiring-view');
+  const now=new Date();
+  const exp30=S.members.filter(m=>m.status==='Active'&&m.daysToExp!==null&&m.daysToExp<=30&&m.daysToExp>=0);
+  const exp60=S.members.filter(m=>m.status==='Active'&&m.daysToExp!==null&&m.daysToExp<=60&&m.daysToExp>30);
+  const exp90=S.members.filter(m=>m.status==='Active'&&m.daysToExp!==null&&m.daysToExp<=90&&m.daysToExp>60);
+  const recentLapsed=S.members.filter(m=>m.status==='Lapsed'&&m.daysToExp!==null&&m.daysToExp>=-90&&m.daysToExp<0);
+
+  let h='<div class="stats">';
+  h+='<div class="stat lapsed-stat"><div class="num">'+exp30.length+'</div><div class="lbl">Within 30 days</div></div>';
+  h+='<div class="stat warn-stat"><div class="num">'+exp60.length+'</div><div class="lbl">30-60 days</div></div>';
+  h+='<div class="stat total-stat"><div class="num">'+exp90.length+'</div><div class="lbl">60-90 days</div></div>';
+  h+='<div class="stat lapsed-stat"><div class="num">'+recentLapsed.length+'</div><div class="lbl">Recently Lapsed</div></div>';
+  h+='</div>';
+
+  function renderGroup(title,list,color){
+    if(!list.length)return'';
+    let t='<div class="card"><div class="card-hdr"><h2 style="color:'+color+'">'+title+' ('+list.length+')</h2></div>';
+    t+='<div style="overflow-x:auto"><table><thead><tr><th>Name</th><th>CoWN #</th><th>Email</th><th>Expires</th><th>Days</th></tr></thead><tbody>';
+    list.forEach(m=>{
+      t+='<tr><td class="bold">'+esc(m.fullName)+'</td><td class="ctr">'+m.cownNum+'</td><td style="font-size:.75rem">'+esc(m.email)+'</td>';
+      t+='<td class="ctr">'+fmtDate(m.expDate)+'</td>';
+      t+='<td class="ctr bold" style="color:'+color+'">'+m.daysToExp+'</td></tr>';
+    });
+    t+='</tbody></table></div></div>';
+    return t;
+  }
+  h+=renderGroup('Expiring Within 30 Days',exp30,'var(--red)');
+  h+=renderGroup('Expiring 30-60 Days',exp60,'var(--yellow)');
+  h+=renderGroup('Expiring 60-90 Days',exp90,'var(--accent)');
+  h+=renderGroup('Recently Lapsed (last 90 days)',recentLapsed,'var(--red)');
+
+  h+='<div style="margin-top:1rem"><button class="btn btn-accent" id="dl-renewal-list">📥 Download Renewal List</button></div>';
+  el.innerHTML=h;
+  document.getElementById('dl-renewal-list').addEventListener('click',function(){
+    const all=[...exp30,...exp60,...exp90,...recentLapsed].sort((a,b)=>(a.daysToExp||0)-(b.daysToExp||0));
+    const rows=[['Name','CoWN #','Email','Type','Expiration','Days Remaining','Status']];
+    all.forEach(m=>{rows.push([m.fullName,m.cownNum,m.email,m.type,fmtDate(m.expDate),m.daysToExp,m.daysToExp<0?'Lapsed':'Expiring']);});
+    const ws=XLSX.utils.aoa_to_sheet(rows);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Renewals');XLSX.writeFile(wb,'CoWN_Renewal_List.xlsx');
+  });
+}
+
+function renderCards(){
+  const el=document.getElementById('cards-view');
+  const active=S.members.filter(m=>m.status==='Active');
+  const activeSent=active.filter(m=>m.cardSent);
+  const activeUnsent=active.filter(m=>!m.cardSent&&m.email);
+  const activeNoEmail=active.filter(m=>!m.cardSent&&!m.email);
+  let h='<div class="card"><div class="card-hdr"><h2>Membership Cards</h2><p>Generate and email cards for active members</p></div>';
+  h+='<div class="stats" style="margin-bottom:1rem">';
+  h+='<div class="stat active-stat"><div class="num">'+activeSent.length+'</div><div class="lbl">Cards Sent ✓</div></div>';
+  h+='<div class="stat warn-stat"><div class="num">'+activeUnsent.length+'</div><div class="lbl">Need to Send</div></div>';
+  h+='<div class="stat lapsed-stat"><div class="num">'+activeNoEmail.length+'</div><div class="lbl">No Email ⚠️</div></div>';
+  h+='</div>';
+  h+='<div class="search-wrap"><span class="search-icon">🔍</span><input class="search-box" id="card-q" placeholder="Search active members..."></div>';
+  h+='<div class="pills" style="margin-bottom:.75rem">';
+  h+='<button class="pill active" data-cf="all">All Active <span class="ct">('+active.length+')</span></button>';
+  h+='<button class="pill" data-cf="unsent">Needs Card <span class="ct">('+activeUnsent.length+')</span></button>';
+  h+='<button class="pill" data-cf="sent">Already Sent <span class="ct">('+activeSent.length+')</span></button>';
+  h+='<button class="pill" data-cf="noemail">No Email <span class="ct">('+activeNoEmail.length+')</span></button>';
+  h+='</div>';
+  h+='<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem">';
+  h+='<button class="btn btn-accent" id="batch-cards">🖨 Print All Active Cards</button>';
+  if(activeUnsent.length>0)h+='<button class="btn btn-green" id="batch-email">📧 Email '+activeUnsent.length+' Unsent Cards</button>';
+  else h+='<button class="btn btn-dark" disabled style="opacity:.5">✓ All cards sent</button>';
+  h+='</div>';
+  h+='<div id="card-results"></div></div>';
+  h+='<div id="card-preview"></div>';
+  el.innerHTML=h;
+
+  let cardFilter='all';
+  function renderCardList(q){
+    let list=active;
+    if(cardFilter==='unsent')list=activeUnsent;
+    else if(cardFilter==='sent')list=activeSent;
+    else if(cardFilter==='noemail')list=activeNoEmail;
+    if(q)list=list.filter(m=>m.fullName.toLowerCase().includes(q)||String(m.cownNum).includes(q));
+    const res=document.getElementById('card-results');
+    if(!list.length){res.innerHTML='<p class="empty">No members match</p>';return;}
+    let t='<div style="overflow-x:auto"><table><thead><tr><th>Name</th><th>CoWN #</th><th>Type</th><th>Expires</th><th>Card Status</th><th></th></tr></thead><tbody>';
+    list.slice(0,50).forEach(m=>{
+      t+='<tr><td class="bold">'+esc(m.fullName)+'</td><td class="ctr">'+m.cownNum+'</td><td class="ctr">'+typeBadge(m.type)+'</td>';
+      t+='<td class="ctr">'+fmtDate(m.expDate)+'</td>';
+      t+='<td class="ctr">'+(m.cardSent?'<span class="badge badge-active">✓ Sent</span>':m.email?'<span class="badge badge-expiring">Pending</span>':'<span class="badge badge-lapsed">No Email</span>')+'</td>';
+      t+='<td><button class="btn btn-dark btn-sm gen-card" data-num="'+m.cownNum+'">🪪 View</button>';
+      if(m.email&&!m.cardSent)t+=' <button class="btn btn-sm btn-green send-one-email" data-num="'+m.cownNum+'">📧 Send</button>';
+      else if(m.email&&m.cardSent)t+=' <button class="btn btn-sm btn-dark send-one-email" data-num="'+m.cownNum+'">📧 Resend</button>';
+      t+='</td></tr>';
+    });
+    t+='</tbody></table></div>';
+    if(list.length>50)t+='<p class="note">Showing first 50</p>';
+    res.innerHTML=t;
+    res.querySelectorAll('.gen-card').forEach(b=>b.addEventListener('click',()=>{
+      const mem=S.members.find(m=>m.cownNum===parseInt(b.dataset.num));
+      if(mem)showCardModal(mem);
+    }));
+    res.querySelectorAll('.send-one-email').forEach(b=>b.addEventListener('click',function(){
+      sendCardEmail(parseInt(this.dataset.num),this);
+    }));
+  }
+  renderCardList('');
+  document.getElementById('card-q').addEventListener('input',function(){renderCardList(this.value.trim().toLowerCase());});
+  el.querySelectorAll('[data-cf]').forEach(b=>b.addEventListener('click',function(){
+    cardFilter=this.dataset.cf;
+    el.querySelectorAll('[data-cf]').forEach(p=>p.classList.remove('active'));
+    this.classList.add('active');
+    renderCardList(document.getElementById('card-q').value.trim().toLowerCase());
+  }));
+  document.getElementById('batch-cards').addEventListener('click',function(){
+    // Generate a printable page with all active cards
+    const cards=active.map(m=>buildCardHTML(m)).join('<div style="page-break-after:always;margin-bottom:2rem"></div>');
+    const win=window.open('','_blank');
+    win.document.write('<html><head><title>CoWN Membership Cards</title>');
+    win.document.write('<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">');
+    win.document.write('<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:"Source Sans 3",sans-serif;padding:2rem;background:#fff}');
+    win.document.write('.card-page{max-width:500px;margin:0 auto 2rem;padding:2rem}');
+    win.document.write('.mem-card{background:white;border-radius:12px;padding:1.5rem;max-width:400px;margin:0 auto;text-align:center;color:#1a1a1a;border:2px solid #D4A04A}');
+    win.document.write('.logo-area{font-family:Oswald,sans-serif;font-size:1.1rem;color:#1a4a7a;letter-spacing:.1em;margin-bottom:.75rem;padding-bottom:.75rem;border-bottom:2px solid #D4A04A}');
+    win.document.write('.logo-area .big{font-size:2.2rem;font-weight:700;color:#1a4a7a;line-height:1}');
+    win.document.write('.logo-area .sub{font-size:.6rem;letter-spacing:.2em;color:#888}');
+    win.document.write('.mem-name{font-family:Oswald,sans-serif;font-size:1.5rem;font-weight:700;color:#1a1a1a;margin:.5rem 0 .25rem}');
+    win.document.write('.mem-num{font-size:.9rem;color:#555;margin-bottom:.75rem}');
+    win.document.write('.mem-info{display:flex;justify-content:space-between;padding:.5rem 1rem;background:#f5f1eb;border-radius:8px;font-size:.85rem;font-weight:600}');
+    win.document.write('.mem-type{color:#D4A04A}.mem-exp{color:#555}');
+    win.document.write('.welcome{text-align:left;max-width:400px;margin:1.5rem auto 0;font-size:.9rem;line-height:1.5;color:#333}');
+    win.document.write('.welcome h3{font-family:Oswald,sans-serif;margin-bottom:.5rem}');
+    win.document.write('.welcome ul{margin:.5rem 0 .5rem 1.5rem}');
+    win.document.write('@media print{.card-page{page-break-after:always}}</style></head><body>');
+    active.forEach(m=>{
+      win.document.write('<div class="card-page">');
+      win.document.write(buildCardHTML(m));
+      win.document.write(buildWelcomeHTML(m));
+      win.document.write('</div>');
+    });
+    win.document.write('</body></html>');
+    win.document.close();
+    setTimeout(()=>win.print(),500);
+  });
+  document.getElementById('batch-email').addEventListener('click',function(){
+    if(!activeUnsent.length){alert('All active members with emails have already been sent cards!');return;}
+    if(!confirm('Send membership cards to '+activeUnsent.length+' members who haven\'t received one yet?\n\nMembers already sent will be skipped.'))return;
+    const nums=activeUnsent.map(m=>m.cownNum);
+    sendBatchEmails(nums,this);
+  });
+}
+
+function buildCardHTML(m){
+  return '<div class="mem-card">'
+    +'<div class="logo-area">'
+    +'<div style="font-size:.55rem;letter-spacing:.25em">C O L O R A D O &nbsp;&nbsp; W Y O M I N G &nbsp;&nbsp; N E B R A S K A</div>'
+    +'<div class="big">CoWN</div>'
+    +'<div class="sub">S T O C K &nbsp; H O R S E &nbsp; A S S O C I A T I O N</div>'
+    +'</div>'
+    +'<div class="mem-name">'+esc(m.fullName)+'</div>'
+    +'<div class="mem-num">CoWN #: '+m.cownNum+'</div>'
+    +'<div class="mem-info">'
+    +'<span class="mem-type">'+esc(m.type)+'</span>'
+    +'<span class="mem-exp">Exp Date: '+fmtDate(m.expDate)+'</span>'
+    +'</div></div>';
+}
+
+function buildWelcomeHTML(m){
+  return '<div class="welcome">'
+    +'<p><strong>Hi '+esc(m.first)+',</strong></p>'
+    +'<p>Welcome to <strong>Colorado, Wyoming, and Nebraska Stock Horse Association - CoWN!</strong> We\'re thrilled to have you as a valued member.</p>'
+    +'<p>Below is your <strong>official membership card</strong>, which contains your membership details:</p>'
+    +'<h3>Membership Benefits:</h3>'
+    +'<p>✔ Included in an annual CoWN membership:</p>'
+    +'<ul>'
+    +'<li>CoWN Membership</li>'
+    +'<li>SHTx Membership</li>'
+    +'<li>Access to all of our clinics and events throughout the year</li>'
+    +'<li>Records will be maintained on you and your horse for all CoWN-approved events</li>'
+    +'<li>CoWN newsletters and e-blasts</li>'
+    +'</ul>'
+    +'<p>You can always check <strong>member information, division eligibility, or renew</strong> on the CoWN Website. Thank you for being part of our community!</p>'
+    +'</div>';
+}
+
+function showCardModal(m){
+  const root=document.getElementById('modal-root');
+  let h='<div class="modal-overlay" id="card-modal"><div class="modal" style="max-width:550px">';
+  h+=buildCardHTML(m);
+  h+=buildWelcomeHTML(m);
+  h+='<div class="btn-row" style="margin-top:1.5rem"><button class="btn btn-dark" id="card-close">Close</button> <button class="btn btn-accent" id="card-print">🖨 Print / Save PDF</button>';
+  if(S.adminUnlocked&&m.email)h+=' <button class="btn btn-green" id="card-email" data-num="'+m.cownNum+'">📧 Email Card</button>';
+  if(S.adminUnlocked&&!m.email)h+=' <span style="font-size:.75rem;color:var(--red)">⚠️ No email on file</span>';
+  h+='</div>';
+  h+='</div></div>';
+  root.innerHTML=h;
+  document.getElementById('card-close').addEventListener('click',()=>{root.innerHTML='';});
+  document.getElementById('card-modal').addEventListener('click',e=>{if(e.target.id==='card-modal')root.innerHTML='';});
+  document.getElementById('card-print').addEventListener('click',()=>{
+    const win=window.open('','_blank');
+    win.document.write('<html><head><title>CoWN Card - '+esc(m.fullName)+'</title>');
+    win.document.write('<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">');
+    win.document.write('<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:"Source Sans 3",sans-serif;padding:2rem;background:#fff}');
+    win.document.write('.mem-card{background:white;border-radius:12px;padding:1.5rem;max-width:400px;margin:0 auto;text-align:center;color:#1a1a1a;border:2px solid #D4A04A}');
+    win.document.write('.logo-area{font-family:Oswald,sans-serif;font-size:1.1rem;color:#1a4a7a;letter-spacing:.1em;margin-bottom:.75rem;padding-bottom:.75rem;border-bottom:2px solid #D4A04A}');
+    win.document.write('.logo-area .big{font-size:2.2rem;font-weight:700;color:#1a4a7a;line-height:1}');
+    win.document.write('.logo-area .sub{font-size:.6rem;letter-spacing:.2em;color:#888}');
+    win.document.write('.mem-name{font-family:Oswald,sans-serif;font-size:1.5rem;font-weight:700;color:#1a1a1a;margin:.5rem 0 .25rem}');
+    win.document.write('.mem-num{font-size:.9rem;color:#555;margin-bottom:.75rem}');
+    win.document.write('.mem-info{display:flex;justify-content:space-between;padding:.5rem 1rem;background:#f5f1eb;border-radius:8px;font-size:.85rem;font-weight:600}');
+    win.document.write('.mem-type{color:#D4A04A}.mem-exp{color:#555}');
+    win.document.write('.welcome{text-align:left;max-width:400px;margin:1.5rem auto 0;font-size:.9rem;line-height:1.5;color:#333}');
+    win.document.write('.welcome h3{font-family:Oswald,sans-serif;margin-bottom:.5rem}');
+    win.document.write('.welcome ul{margin:.5rem 0 .5rem 1.5rem}');
+    win.document.write('</style></head><body>');
+    win.document.write(buildCardHTML(m));
+    win.document.write(buildWelcomeHTML(m));
+    win.document.write('</body></html>');
+    win.document.close();
+    setTimeout(()=>win.print(),500);
+  });
+  const emailBtn=document.getElementById('card-email');
+  if(emailBtn)emailBtn.addEventListener('click',function(){sendCardEmail(parseInt(this.dataset.num),this);});
+}
+
+function showDetailModal(m){
+  const root=document.getElementById('modal-root');
+  let h='<div class="modal-overlay" id="detail-modal"><div class="modal">';
+  h+='<h3>'+esc(m.fullName)+' <span style="font-weight:400;font-size:.85rem;color:var(--muted)">CoWN #'+m.cownNum+'</span></h3>';
+  h+='<div style="display:flex;gap:.5rem;margin-bottom:1rem">'+typeBadge(m.type)+statusBadge(m)+'</div>';
+  const fields=[
+    ['Email',m.email],['Phone',fmtPhone(m.phone)],
+    ['Address',[m.address,m.city,m.state,m.zip].filter(Boolean).join(', ')],
+    ['Type',m.type],['Duration',m.duration+' year'+(m.duration>1?'s':'')],
+    ['Renewal Date',fmtDate(m.renewalDate)],['Expiration',fmtDate(m.expDate)],
+    ['Method',m.method],['Days to Exp',m.daysToExp!==null?m.daysToExp+' days':'—'],
+    ['Youth DOB',m.youthDOB?fmtDate(m.youthDOB)+(m.age?' (Age: '+m.age+')':''):''],
+    ['L1 Status',m.l1Status],
+    ['SHTX 2025',m.shtx2025],['SHTX 2024',m.shtx2024],['SHTX 2023',m.shtx2023],
+    ['2022 Member',m.was2022],['2023 Member',m.was2023]
+  ];
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:.25rem .75rem;font-size:.85rem">';
+  fields.forEach(([lbl,val])=>{
+    if(!val&&val!==0)return;
+    h+='<div style="color:var(--muted)">'+lbl+'</div><div>'+esc(String(val))+'</div>';
+  });
+  h+='</div>';
+  h+='<div class="btn-row"><button class="btn btn-dark" id="detail-close">Close</button> <button class="btn btn-accent detail-card-btn" data-num="'+m.cownNum+'">🪪 View Card</button></div>';
+  h+='</div></div>';
+  root.innerHTML=h;
+  document.getElementById('detail-close').addEventListener('click',()=>{root.innerHTML='';});
+  document.getElementById('detail-modal').addEventListener('click',e=>{if(e.target.id==='detail-modal')root.innerHTML='';});
+  root.querySelector('.detail-card-btn').addEventListener('click',()=>{root.innerHTML='';showCardModal(m);});
+}
+
+function renderSettings(){
+  const el=document.getElementById('settings-view');
+  const st=getStats();
+  let h='<h3>⚙️ Settings</h3>';
+  h+='<h3 style="margin-top:1rem">Data</h3><div class="card">';
+  h+='<p style="font-size:.85rem">👥 '+st.total+' total members ('+st.active+' active, '+st.lapsed+' lapsed)</p>';
+  h+='<p style="font-size:.85rem;color:var(--muted)">📧 '+S.members.filter(m=>!m.email).length+' members missing email addresses</p>';
+  h+='<p style="font-size:.85rem;color:var(--muted)">⚠️ '+st.expiring+' members expiring within 60 days</p>';
+  h+='<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.75rem">';
+  h+='<button class="btn btn-accent" id="reload-mem">↻ Reload from Google Drive</button>';
+  h+='<label class="btn btn-dark" style="cursor:pointer">📁 Upload File<input type="file" accept=".xlsx,.xls" id="mem-upload" style="display:none"></label>';
+  h+='</div></div>';
+
+  h+='<h3>📥 Downloads</h3><div class="card">';
+  h+='<div style="display:flex;gap:.5rem;flex-wrap:wrap">';
+  h+='<button class="btn btn-accent" id="dl-all-members">📥 All Members (Excel)</button>';
+  h+='<button class="btn btn-accent" id="dl-active">📥 Active Members Only</button>';
+  h+='<button class="btn btn-accent" id="dl-renewal">📥 Renewal List</button>';
+  h+='<button class="btn btn-accent" id="dl-shtx">📥 SHTX Check List</button>';
+  h+='</div></div>';
+
+  h+='<h3>Deployment</h3><div class="card" style="font-size:.85rem;color:var(--muted)">';
+  h+='<p>This membership hub connects to the same Google Sheet via proxy.</p>';
+  h+='<p>Public member lookup works without a password. Admin features require the password.</p>';
+  h+='<p>Host alongside your results app: <code>membership.html</code></p></div>';
+
+  el.innerHTML=h;
+  document.getElementById('reload-mem').addEventListener('click',()=>{showView('loading');autoLoad();});
+  document.getElementById('mem-upload').addEventListener('change',async e=>{
+    if(!e.target.files[0])return;
+    try{const d=await e.target.files[0].arrayBuffer();const wb=XLSX.read(d);S.members=parseMemberData(wb);
+      document.getElementById('status-line').textContent=S.members.length+' members loaded from file';
+      showView('dashboard');}catch(err){alert(err.message);}
+  });
+  document.getElementById('dl-all-members').addEventListener('click',()=>{
+    const rows=[['First','Last','CoWN #','Type','Status','Duration','Renewal Date','Expiration Date','Email','Phone','Address','City','State','Zip']];
+    S.members.forEach(m=>{rows.push([m.first,m.last,m.cownNum,m.type,m.status,m.duration,fmtDate(m.renewalDate),fmtDate(m.expDate),m.email,fmtPhone(m.phone),m.address,m.city,m.state,m.zip]);});
+    const ws=XLSX.utils.aoa_to_sheet(rows);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'All Members');XLSX.writeFile(wb,'CoWN_All_Members.xlsx');
+  });
+  document.getElementById('dl-active').addEventListener('click',()=>{
+    const rows=[['First','Last','CoWN #','Type','Expiration','Email','Phone']];
+    S.members.filter(m=>m.status==='Active').forEach(m=>{rows.push([m.first,m.last,m.cownNum,m.type,fmtDate(m.expDate),m.email,fmtPhone(m.phone)]);});
+    const ws=XLSX.utils.aoa_to_sheet(rows);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Active');XLSX.writeFile(wb,'CoWN_Active_Members.xlsx');
+  });
+  document.getElementById('dl-renewal').addEventListener('click',()=>{
+    const exp=S.members.filter(m=>m.expiring||(m.status==='Lapsed'&&m.daysToExp!==null&&m.daysToExp>=-90));
+    const rows=[['First','Last','CoWN #','Email','Type','Expiration','Days','Status']];
+    exp.sort((a,b)=>(a.daysToExp||0)-(b.daysToExp||0)).forEach(m=>{rows.push([m.first,m.last,m.cownNum,m.email,m.type,fmtDate(m.expDate),m.daysToExp,m.daysToExp<0?'Lapsed':'Expiring']);});
+    const ws=XLSX.utils.aoa_to_sheet(rows);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Renewals');XLSX.writeFile(wb,'CoWN_Renewals.xlsx');
+  });
+  document.getElementById('dl-shtx').addEventListener('click',()=>{
+    const rows=[['First','Last','CoWN #','Type','SHTX 2025','SHTX 2024','SHTX 2023']];
+    S.members.filter(m=>m.shtx2025||m.shtx2024||m.shtx2023).forEach(m=>{rows.push([m.first,m.last,m.cownNum,m.type,m.shtx2025,m.shtx2024,m.shtx2023]);});
+    const ws=XLSX.utils.aoa_to_sheet(rows);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'SHTX Checks');XLSX.writeFile(wb,'CoWN_SHTX_Checks.xlsx');
+  });
+}
+
+// ===== AUTH =====
+document.getElementById('pwd-btn').addEventListener('click',()=>{
+  const val=document.getElementById('pwd-input').value;
+  if(val===CONFIG.password){
+    S.adminUnlocked=true;
+    document.getElementById('pwd-gate').classList.add('hidden');
+    renderTabs();
+    if(S.pendingView){showView(S.pendingView);S.pendingView=null;}
+  }else{
+    document.getElementById('pwd-input').value='';
+    document.getElementById('pwd-input').placeholder='Wrong password';
+  }
+});
+document.getElementById('pwd-input').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('pwd-btn').click();});
+
+// ===== EMAIL FUNCTIONS =====
+async function sendCardEmail(cownNum,btn){
+  if(!CONFIG.emailProxyUrl||CONFIG.emailProxyUrl.includes('PASTE')){alert('Email script URL not configured. Update CONFIG.emailProxyUrl in the HTML.');return;}
+  const orig=btn.textContent;
+  btn.textContent='Sending...';btn.disabled=true;
+  try{
+    const r=await fetch(CONFIG.emailProxyUrl+'?action=send&cownNum='+cownNum);
+    const data=await r.json();
+    if(data.success){btn.textContent='✓ Sent!';btn.classList.add('btn-green');
+      // Mark as sent locally so UI updates without reload
+      const mem=S.members.find(m=>m.cownNum===cownNum);
+      if(mem){mem.cardSent=true;mem.cardSentDate='sent';}
+      setTimeout(()=>{btn.textContent=orig;btn.disabled=false;btn.classList.remove('btn-green');},3000);
+    }else{btn.textContent='✗ Failed';alert('Error: '+(data.error||'Unknown error'));
+      setTimeout(()=>{btn.textContent=orig;btn.disabled=false;},2000);}
+  }catch(e){btn.textContent='✗ Error';alert('Network error: '+e.message);
+    setTimeout(()=>{btn.textContent=orig;btn.disabled=false;},2000);}
+}
+
+async function sendBatchEmails(cownNums,btn){
+  if(!CONFIG.emailProxyUrl||CONFIG.emailProxyUrl.includes('PASTE')){alert('Email script URL not configured.');return;}
+  const orig=btn.textContent;
+  btn.textContent='Sending 0/'+cownNums.length+'...';btn.disabled=true;
+  try{
+    const r=await fetch(CONFIG.emailProxyUrl+'?action=sendBatch&nums='+cownNums.join(','));
+    const data=await r.json();
+    btn.textContent='✓ Sent '+data.sent+'/'+data.total;
+    if(data.failed>0)alert(data.failed+' failed to send. Check member emails.');
+    setTimeout(()=>{btn.textContent=orig;btn.disabled=false;},4000);
+  }catch(e){btn.textContent='✗ Error';alert('Network error: '+e.message);
+    setTimeout(()=>{btn.textContent=orig;btn.disabled=false;},2000);}
+}
+
+// ===== LOAD =====
+async function autoLoad(){
+  try{
+    const r=await fetch(CONFIG.proxyUrl+'?type=membership');
+    if(!r.ok)throw new Error('Proxy error '+r.status);
+    const b64=await r.text();const bin=atob(b64);const arr=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
+    const wb=XLSX.read(arr,{type:'array'});
+    S.members=parseMemberData(wb);
+    document.getElementById('status-line').textContent=S.members.length+' members loaded · '+S.members.filter(m=>m.status==='Active').length+' active';
+    renderTabs();showView('lookup');
+  }catch(e){
+    console.error(e);
+    document.getElementById('loading-view').innerHTML='<div class="card"><h3>Upload Membership File</h3><p style="color:var(--muted);margin:.5rem 0">'+esc(e.message)+'</p>'
+      +'<label class="btn btn-accent" style="cursor:pointer;display:inline-block;margin-top:.5rem">📁 Upload .xlsx<input type="file" accept=".xlsx,.xls" id="fallback-upload" style="display:none"></label></div>';
+    document.getElementById('fallback-upload').addEventListener('change',async ev=>{
+      if(!ev.target.files[0])return;
+      try{const d=await ev.target.files[0].arrayBuffer();const wb=XLSX.read(d);S.members=parseMemberData(wb);
+        document.getElementById('status-line').textContent=S.members.length+' members loaded from file';
+        renderTabs();showView('lookup');}catch(err){alert(err.message);}
+    });
+  }
+}
+
+autoLoad();
+</script>
+</body></html>
