@@ -101,9 +101,11 @@ function lookupEmail(name){
 
 function parseMeritPoints(wb){
   const shName=wb.SheetNames.find(n=>n==="Existing Merit Points");
+  console.log('Merit parse: sheets=',wb.SheetNames,'found=',shName);
   if(!shName)return null;
   const raw=XLSX.utils.sheet_to_json(wb.Sheets[shName],{header:1,defval:null});
-  if(!raw||raw.length<3)return null;
+  if(!raw||raw.length<3){console.log('Merit parse: insufficient rows',raw?.length);return null;}
+  console.log('Merit parse: rows=',raw.length);
   function extractDiv(fc){
     const entries=[];
     for(let r=2;r<raw.length;r++){
@@ -120,7 +122,9 @@ function parseMeritPoints(wb){
       const aw=(raw[r][fc+10]||"").toString().trim();
       entries.push({name,horse,years,awarded:aw.toLowerCase()==="none"?"":aw});}
     return entries;}
-  return{Novice:extractDiv(0),["Non-Pro"]:extractDiv(13),Open:extractDiv(26),Limited:extractDiv(41)};}
+  const result={Novice:extractDiv(0),["Non-Pro"]:extractDiv(13),Open:extractDiv(26),Limited:extractDiv(41)};
+  console.log('Merit parsed:',Object.entries(result).map(([k,v])=>k+':'+v.length).join(', '));
+  return result;}
 function parseCleanData(raw){
   const earn={};
   let hRow=-1;
@@ -550,6 +554,7 @@ function renderMerit(){
   if(!meritDivs.includes(S.selMeritDiv))S.selMeritDiv="Novice";
   const div=S.selMeritDiv;
   const meritSrc=S.meritData||MERIT_DATA;
+  console.log('Merit render using:',S.meritData?'LIVE data':'EMBEDDED fallback');
   const entries=meritSrc[div]||[];
   const threshold=div==="Novice"?300:100;
   const supremeThreshold=div==="Novice"?300:200;
@@ -580,13 +585,13 @@ function renderMerit(){
       merged[hk].years["2025"]=info.pts;
       if(!merged[hk].name)merged[hk].name=info.rider;
     }else{
-      // Match by horse (case-insensitive)
-      let found=false;
-      for(const[key,me]of Object.entries(merged)){
-        if(key.endsWith("|||"+hk)){me.years["2025"]=info.pts;found=true;break;}}
-      if(!found){
-        const key=info.rider.toLowerCase()+"|||"+hk;
-        merged[key]={name:info.rider,horse:info.horse,years:{"2025":info.pts},awarded:""};
+      // Match by rider+horse for non-Open
+      const rk=info.rider.toLowerCase()+"|||"+hk;
+      if(merged[rk]){
+        merged[rk].years["2025"]=info.pts;
+      }else{
+        // New rider/horse combo for 2025
+        merged[rk]={name:info.rider,horse:info.horse,years:{"2025":info.pts},awarded:""};
       }
     }
   }
