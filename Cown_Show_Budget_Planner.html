@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DVZ Show Budget Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F7F4EF;
+    --surface: #FFFFFF;
+    --surface2: #F0ECE4;
+    --border: #DDD8CE;
+    --text: #1C1A17;
+    --text-muted: #7A7469;
+    --text-light: #A89F94;
+    --accent: #2D5A3D;
+    --accent-light: #E8F0EB;
+    --accent-mid: #4A8C61;
+    --danger: #8B2E2E;
+    --danger-light: #F5EAEA;
+    --amber: #7A5C1E;
+    --amber-light: #F5EDD8;
+    --rule: #E5E0D6;
+  }
+
+  body {
+    font-family: 'Figtree', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  header {
+    background: var(--accent);
+    color: white;
+    padding: 2rem 2.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  header::after {
+    content: '';
+    position: absolute;
+    right: -60px; top: -60px;
+    width: 280px; height: 280px;
+    border-radius: 50%;
+    border: 40px solid rgba(255,255,255,0.06);
+  }
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+  header p {
+    font-size: 13px;
+    opacity: 0.7;
+    margin-top: 4px;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 0;
+    min-height: calc(100vh - 100px);
+  }
+
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 1.5rem;
+    overflow-y: auto;
+    max-height: calc(100vh - 100px);
+    position: sticky;
+    top: 0;
+  }
+
+  .main {
+    padding: 1.5rem 2rem;
+    overflow-y: auto;
+  }
+
+  .section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-light);
+    margin-bottom: 0.75rem;
+    margin-top: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .section-label:first-child { margin-top: 0; }
+
+  .field { margin-bottom: 0.875rem; }
+  .field label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+  }
+  .field label span {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--rule);
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: none;
+  }
+
+  input[type="number"], input[type="text"] {
+    width: 100%;
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+  }
+  input[type="number"]:focus, input[type="text"]:focus {
+    border-color: var(--accent-mid);
+    box-shadow: 0 0 0 3px rgba(74,140,97,0.12);
+  }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* Sponsor section */
+  .sponsor-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .sponsor-row input[type="text"] { font-family: 'Figtree', sans-serif; }
+  .sponsor-row input[type="number"] { text-align: right; }
+  .remove-btn {
+    width: 28px; height: 28px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .remove-btn:hover { background: var(--danger-light); border-color: var(--danger); color: var(--danger); }
+  .add-btn {
+    width: 100%;
+    padding: 7px;
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    background: none;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-muted);
+    font-family: 'Figtree', sans-serif;
+    margin-top: 4px;
+  }
+  .add-btn:hover { border-color: var(--accent-mid); color: var(--accent); background: var(--accent-light); }
+
+  /* Right panel */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 1.75rem;
+  }
+  .metric {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.125rem;
+  }
+  .metric-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .metric-value { font-family: 'DM Serif Display', serif; font-size: 1.75rem; font-weight: 400; letter-spacing: -0.02em; }
+  .metric-value.positive { color: var(--accent); }
+  .metric-value.negative { color: var(--danger); }
+  .metric-sub { font-size: 11px; color: var(--text-light); margin-top: 3px; }
+  .metric-sub.up { color: var(--accent-mid); }
+  .metric-sub.down { color: var(--danger); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .card-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-light);
+    margin-bottom: 1rem;
+  }
+
+  /* Revenue breakdown bars */
+  .breakdown-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 13px;
+  }
+  .breakdown-label { width: 130px; color: var(--text-muted); flex-shrink: 0; }
+  .breakdown-bar-wrap { flex: 1; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+  .breakdown-bar { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
+  .breakdown-value { width: 75px; text-align: right; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text); }
+  .breakdown-pct { width: 38px; text-align: right; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-light); }
+
+  /* Expense rows */
+  .exp-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--rule);
+    font-size: 13px;
+  }
+  .exp-row:last-child { border-bottom: none; }
+  .exp-name { color: var(--text-muted); }
+  .exp-val { font-family: 'DM Mono', monospace; font-size: 12px; }
+
+  /* Scenario comparison */
+  .scenario-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .scenario-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+  }
+  .scenario-card.current { border-color: var(--accent); background: var(--accent-light); }
+  .scenario-name { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-light); margin-bottom: 6px; }
+  .scenario-net { font-family: 'DM Serif Display', serif; font-size: 1.4rem; }
+  .scenario-net.pos { color: var(--accent); }
+  .scenario-net.neg { color: var(--danger); }
+  .scenario-detail { font-size: 11px; color: var(--text-light); margin-top: 4px; }
+
+  /* Break-even */
+  .breakeven-bar-wrap {
+    height: 24px;
+    background: var(--danger-light);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+    margin: 10px 0 6px;
+  }
+  .breakeven-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-light), var(--accent));
+    border-radius: 6px;
+    transition: width 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+  }
+  .breakeven-label { font-size: 11px; font-family: 'DM Mono', monospace; color: white; }
+  .breakeven-info { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-light); font-family: 'DM Mono', monospace; }
+
+  .alert {
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+  }
+  .alert-green { background: var(--accent-light); color: var(--accent); border: 1px solid rgba(45,90,61,0.2); }
+  .alert-red { background: var(--danger-light); color: var(--danger); border: 1px solid rgba(139,46,46,0.2); }
+  .alert-amber { background: var(--amber-light); color: var(--amber); border: 1px solid rgba(122,92,30,0.2); }
+
+  .note { font-size: 11px; color: var(--text-light); margin-top: 4px; font-style: italic; }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { max-height: none; position: static; }
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    .scenario-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>DVZ Show Budget Planner</h1>
+  <p>Adjust fees, entries, and costs to project show profitability</p>
+</header>
+
+<div class="layout">
+
+  <!-- SIDEBAR: Inputs -->
+  <div class="sidebar">
+
+    <div class="section-label">Show basics</div>
+    <div class="field">
+      <label>Number of classes <span id="lbl-classes">950</span></label>
+      <input type="range" id="classes" min="200" max="1500" step="10" value="950" oninput="update()">
+    </div>
+    <div class="field">
+      <label>Number of entries <span id="lbl-entries">170</span></label>
+      <input type="range" id="entries" min="50" max="300" step="5" value="170" oninput="update()">
+    </div>
+    <div class="field">
+      <label>Show days <span id="lbl-days">3</span></label>
+      <input type="range" id="days" min="1" max="5" step="1" value="3" oninput="update()">
+    </div>
+
+    <div class="section-label">Income — fees</div>
+    <div class="field">
+      <label>Class fee <span id="lbl-classfee">$35</span></label>
+      <input type="range" id="classfee" min="20" max="75" step="1" value="35" oninput="update()">
+    </div>
+    <div class="field">
+      <label>Cattle fee <span id="lbl-cattlefee">$85</span></label>
+      <input type="range" id="cattlefee" min="50" max="150" step="5" value="85" oninput="update()">
+    </div>
+    <div class="field">
+      <label>Cattle class ratio <span id="lbl-cattleratio">1 in 4</span></label>
+      <input type="range" id="cattleratio" min="3" max="8" step="1" value="4" oninput="update()">
+      <div class="note">Approx. 1 cattle class per every N classes</div>
+    </div>
+    <div class="field">
+      <label>Office fee (per entry) <span id="lbl-officefee">$30</span></label>
+      <input type="range" id="officefee" min="15" max="60" step="1" value="30" oninput="update()">
+    </div>
+    <div class="two-col">
+      <div class="field">
+        <label>Stall — weekend <span id="lbl-stallweekend">$120</span></label>
+        <input type="range" id="stallweekend" min="60" max="250" step="5" value="120" oninput="update()">
+      </div>
+      <div class="field">
+        <label>Stall — per night <span id="lbl-stallnight">$40</span></label>
+        <input type="range" id="stallnight" min="20" max="100" step="5" value="40" oninput="update()">
+      </div>
+    </div>
+    <div class="field">
+      <label>% entries taking weekend stall <span id="lbl-stallpct">60%</span></label>
+      <input type="range" id="stallpct" min="0" max="100" step="5" value="60" oninput="update()">
+    </div>
+
+    <div class="section-label">Sponsors &amp; other income</div>
+    <div id="sponsor-list"></div>
+    <button class="add-btn" onclick="addSponsor()">+ Add sponsor / other income</button>
+
+    <div class="section-label">Costs</div>
+    <div class="field">
+      <label>Arena rental <span id="lbl-arena">$22,000</span></label>
+      <input type="range" id="arena" min="5000" max="60000" step="500" value="22000" oninput="update()">
+    </div>
+    <div class="field">
+      <label>Cattle / hay <span id="lbl-cattle">$6,000</span></label>
+      <input type="range" id="cattle" min="0" max="15000" step="250" value="6000" oninput="update()">
+    </div>
+    <div class="field">
+      <label>Secretary <span id="lbl-secretary">$3,800</span></label>
+      <input type="range" id="secretary" min="0" max="8000" step="100" value="3800" oninput="update()">
+    </div>
+    <div class="field">
+      <label>Judge(s) <span id="lbl-judges">$4,000</span></label>
+      <input type="range" id="judges" min="1000" max="10000" step="250" value="4000" oninput="update()">
+    </div>
+    <div class="field">
+      <label>Scribe(s) <span id="lbl-scribes">$1,200</span></label>
+      <input type="range" id="scribes" min="0" max="3000" step="100" value="1200" oninput="update()">
+    </div>
+    <div class="field">
+      <label>Announcer <span id="lbl-announcer">$900</span></label>
+      <input type="range" id="announcer" min="0" max="2500" step="100" value="900" oninput="update()">
+    </div>
+    <div class="field">
+      <label>Show manager <span id="lbl-manager">$2,500</span></label>
+      <input type="range" id="manager" min="0" max="5000" step="100" value="2500" oninput="update()">
+    </div>
+    <div class="field">
+      <label>Show awards / ribbons <span id="lbl-awards">$2,500</span></label>
+      <input type="range" id="awards" min="500" max="8000" step="100" value="2500" oninput="update()">
+    </div>
+    <div class="field">
+      <label>Jackpot payouts <span id="lbl-jackpot">$3,200</span></label>
+      <input type="range" id="jackpot" min="0" max="8000" step="100" value="3200" oninput="update()">
+    </div>
+    <div class="field">
+      <label>Hotels / travel <span id="lbl-hotels">$1,500</span></label>
+      <input type="range" id="hotels" min="0" max="5000" step="100" value="1500" oninput="update()">
+    </div>
+    <div class="field">
+      <label>Other / misc <span id="lbl-misc">$500</span></label>
+      <input type="range" id="misc" min="0" max="5000" step="100" value="500" oninput="update()">
+    </div>
+
+  </div>
+
+  <!-- MAIN: Results -->
+  <div class="main">
+
+    <div id="alert-box"></div>
+
+    <div class="summary-grid">
+      <div class="metric">
+        <div class="metric-label">Total revenue</div>
+        <div class="metric-value positive" id="out-revenue">$0</div>
+        <div class="metric-sub" id="out-rev-per-entry"></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Total expenses</div>
+        <div class="metric-value" id="out-expenses">$0</div>
+        <div class="metric-sub" id="out-exp-per-entry"></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Net income</div>
+        <div class="metric-value" id="out-net">$0</div>
+        <div class="metric-sub" id="out-margin"></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Breakeven entries</div>
+        <div class="metric-value" id="out-breakeven">—</div>
+        <div class="metric-sub" id="out-breakeven-sub"></div>
+      </div>
+    </div>
+
+    <!-- Breakeven bar -->
+    <div class="card">
+      <div class="card-title">Breakeven progress</div>
+      <div class="breakeven-bar-wrap">
+        <div class="breakeven-bar" id="be-bar">
+          <span class="breakeven-label" id="be-bar-label"></span>
+        </div>
+      </div>
+      <div class="breakeven-info">
+        <span>0 entries</span>
+        <span id="be-mid"></span>
+        <span id="be-max"></span>
+      </div>
+    </div>
+
+    <!-- Revenue breakdown -->
+    <div class="card">
+      <div class="card-title">Revenue breakdown</div>
+      <div id="rev-breakdown"></div>
+    </div>
+
+    <!-- Expense breakdown -->
+    <div class="card">
+      <div class="card-title">Expense breakdown</div>
+      <div id="exp-breakdown"></div>
+    </div>
+
+    <!-- Scenario comparison -->
+    <div class="card">
+      <div class="card-title">Quick scenarios — vs current settings</div>
+      <div class="scenario-grid" id="scenarios"></div>
+    </div>
+
+    <div style="font-size: 11px; color: var(--text-light); margin-top: 1rem;">
+      Based on 2025 DVZ P&L data. Stall income estimated from entry mix. Cattle classes estimated at 1 per N classes.
+    </div>
+
+  </div>
+</div>
+
+<script>
+let sponsors = [];
+
+function addSponsor(name='', amount=500) {
+  const id = Date.now();
+  sponsors.push({ id, name, amount });
+  renderSponsors();
+  update();
+}
+
+function removeSponsor(id) {
+  sponsors = sponsors.filter(s => s.id !== id);
+  renderSponsors();
+  update();
+}
+
+function renderSponsors() {
+  const el = document.getElementById('sponsor-list');
+  el.innerHTML = '';
+  sponsors.forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'sponsor-row';
+    row.innerHTML = `
+      <input type="text" placeholder="Sponsor / source name" value="${s.name}" oninput="updateSponsor(${s.id}, 'name', this.value)">
+      <input type="number" value="${s.amount}" min="0" step="50" style="width:90px" oninput="updateSponsor(${s.id}, 'amount', +this.value); update()">
+      <button class="remove-btn" onclick="removeSponsor(${s.id})">×</button>
+    `;
+    el.appendChild(row);
+  });
+}
+
+function updateSponsor(id, key, val) {
+  const s = sponsors.find(s => s.id === id);
+  if (s) { s[key] = val; update(); }
+}
+
+function fmt(n) {
+  if (n < 0) return '-$' + Math.abs(Math.round(n)).toLocaleString();
+  return '$' + Math.round(n).toLocaleString();
+}
+
+function calcRevenue(classes, entries, classfee, cattlefee, cattleratio, officefee, stallweekend, stallnight, stallpct, sponsorTotal) {
+  const classIncome = classes * classfee;
+  const cattleIncome = (classes / cattleratio) * cattlefee;
+  const officeIncome = entries * officefee;
+  const weekendStalls = Math.round(entries * (stallpct / 100));
+  const nightStalls = entries - weekendStalls;
+  const stallIncome = weekendStalls * stallweekend + nightStalls * stallnight * 2.5;
+  return { classIncome, cattleIncome, officeIncome, stallIncome, sponsorIncome: sponsorTotal,
+           total: classIncome + cattleIncome + officeIncome + stallIncome + sponsorTotal };
+}
+
+function calcExpenses() {
+  const ids = ['arena','cattle','secretary','judges','scribes','announcer','manager','awards','jackpot','hotels','misc'];
+  let total = 0;
+  const items = [];
+  ids.forEach(id => {
+    const v = +document.getElementById(id).value;
+    total += v;
+    items.push({ name: id, value: v });
+  });
+  return { total, items };
+}
+
+function update() {
+  const classes = +document.getElementById('classes').value;
+  const entries = +document.getElementById('entries').value;
+  const days = +document.getElementById('days').value;
+  const classfee = +document.getElementById('classfee').value;
+  const cattlefee = +document.getElementById('cattlefee').value;
+  const cattleratio = +document.getElementById('cattleratio').value;
+  const officefee = +document.getElementById('officefee').value;
+  const stallweekend = +document.getElementById('stallweekend').value;
+  const stallnight = +document.getElementById('stallnight').value;
+  const stallpct = +document.getElementById('stallpct').value;
+
+  // Update labels
+  document.getElementById('lbl-classes').textContent = classes;
+  document.getElementById('lbl-entries').textContent = entries;
+  document.getElementById('lbl-days').textContent = days + (days === 1 ? ' day' : ' days');
+  document.getElementById('lbl-classfee').textContent = '$' + classfee;
+  document.getElementById('lbl-cattlefee').textContent = '$' + cattlefee;
+  document.getElementById('lbl-cattleratio').textContent = '1 in ' + cattleratio;
+  document.getElementById('lbl-officefee').textContent = '$' + officefee;
+  document.getElementById('lbl-stallweekend').textContent = '$' + stallweekend;
+  document.getElementById('lbl-stallnight').textContent = '$' + stallnight;
+  document.getElementById('lbl-stallpct').textContent = stallpct + '%';
+
+  const sliderIds = ['arena','cattle','secretary','judges','scribes','announcer','manager','awards','jackpot','hotels','misc'];
+  const sliderLabels = ['arena','cattle','secretary','judges','scribes','announcer','manager','awards','jackpot','hotels','misc'];
+  sliderIds.forEach((id,i) => {
+    const v = +document.getElementById(id).value;
+    document.getElementById('lbl-' + sliderLabels[i]).textContent = fmt(v);
+  });
+
+  const sponsorTotal = sponsors.reduce((s, x) => s + (+x.amount || 0), 0);
+  const rev = calcRevenue(classes, entries, classfee, cattlefee, cattleratio, officefee, stallweekend, stallnight, stallpct, sponsorTotal);
+  const exp = calcExpenses();
+  const net = rev.total - exp.total;
+  const margin = rev.total > 0 ? (net / rev.total * 100) : 0;
+
+  // Summary
+  document.getElementById('out-revenue').textContent = fmt(rev.total);
+  document.getElementById('out-expenses').textContent = fmt(exp.total);
+  document.getElementById('out-net').textContent = fmt(net);
+  document.getElementById('out-net').className = 'metric-value ' + (net >= 0 ? 'positive' : 'negative');
+  document.getElementById('out-rev-per-entry').textContent = fmt(rev.total / entries) + ' per entry';
+  document.getElementById('out-exp-per-entry').textContent = fmt(exp.total / entries) + ' per entry';
+  document.getElementById('out-margin').textContent = Math.round(margin) + '% net margin';
+  document.getElementById('out-margin').className = 'metric-sub ' + (margin >= 0 ? 'up' : 'down');
+
+  // Breakeven entries
+  const revenuePerEntry = rev.total / entries;
+  const fixedCosts = exp.total;
+  const beEntries = revenuePerEntry > 0 ? Math.ceil(fixedCosts / revenuePerEntry) : '—';
+  document.getElementById('out-breakeven').textContent = beEntries;
+  document.getElementById('out-breakeven-sub').textContent = 'entries needed';
+
+  // Breakeven bar
+  const bePct = Math.min(100, Math.round(entries / beEntries * 100));
+  document.getElementById('be-bar').style.width = bePct + '%';
+  document.getElementById('be-bar-label').textContent = bePct + '%';
+  document.getElementById('be-mid').textContent = Math.round(beEntries / 2) + ' entries';
+  document.getElementById('be-max').textContent = entries + ' entries (current)';
+
+  // Alert
+  const alertEl = document.getElementById('alert-box');
+  if (net >= 10000) {
+    alertEl.innerHTML = `<div class="alert alert-green">On track — this show projects <strong>${fmt(net)} profit</strong> at a ${Math.round(margin)}% margin.</div>`;
+  } else if (net >= 0) {
+    alertEl.innerHTML = `<div class="alert alert-amber">Thin margin — projecting <strong>${fmt(net)} profit</strong> (${Math.round(margin)}%). Consider raising class or office fees.</div>`;
+  } else {
+    alertEl.innerHTML = `<div class="alert alert-red">Projected loss of <strong>${fmt(Math.abs(net))}</strong>. Expenses exceed revenue at current settings.</div>`;
+  }
+
+  // Revenue breakdown
+  const revItems = [
+    { label: 'Class fees', value: rev.classIncome, color: '#4A8C61' },
+    { label: 'Cattle fees', value: rev.cattleIncome, color: '#2D5A3D' },
+    { label: 'Stall fees', value: rev.stallIncome, color: '#7AAB8E' },
+    { label: 'Office fees', value: rev.officeIncome, color: '#9FC4B0' },
+    { label: 'Sponsors / other', value: rev.sponsorIncome, color: '#C5DDD3' },
+  ];
+  const revEl = document.getElementById('rev-breakdown');
+  revEl.innerHTML = '';
+  revItems.forEach(item => {
+    const pct = rev.total > 0 ? (item.value / rev.total * 100) : 0;
+    revEl.innerHTML += `<div class="breakdown-row">
+      <div class="breakdown-label">${item.label}</div>
+      <div class="breakdown-bar-wrap"><div class="breakdown-bar" style="width:${pct}%;background:${item.color}"></div></div>
+      <div class="breakdown-value">${fmt(item.value)}</div>
+      <div class="breakdown-pct">${Math.round(pct)}%</div>
+    </div>`;
+  });
+
+  // Expense breakdown
+  const expLabels = { arena:'Arena rental', cattle:'Cattle / hay', secretary:'Secretary', judges:'Judge(s)', scribes:'Scribe(s)', announcer:'Announcer', manager:'Show manager', awards:'Show awards', jackpot:'Jackpot', hotels:'Hotels / travel', misc:'Other / misc' };
+  const expEl = document.getElementById('exp-breakdown');
+  expEl.innerHTML = '';
+  const sorted = [...exp.items].sort((a,b) => b.value - a.value);
+  sorted.forEach(item => {
+    if (item.value === 0) return;
+    const pct = exp.total > 0 ? (item.value / exp.total * 100) : 0;
+    expEl.innerHTML += `<div class="breakdown-row">
+      <div class="breakdown-label">${expLabels[item.name]}</div>
+      <div class="breakdown-bar-wrap"><div class="breakdown-bar" style="width:${pct}%;background:#C0876A"></div></div>
+      <div class="breakdown-value">${fmt(item.value)}</div>
+      <div class="breakdown-pct">${Math.round(pct)}%</div>
+    </div>`;
+  });
+
+  // Scenarios
+  const s1Rev = calcRevenue(classes, entries, classfee + 5, cattlefee, cattleratio, officefee, stallweekend, stallnight, stallpct, sponsorTotal);
+  const s2Rev = calcRevenue(classes, entries + 20, classfee, cattlefee, cattleratio, officefee, stallweekend, stallnight, stallpct, sponsorTotal);
+  const s3Rev = calcRevenue(classes, entries, classfee, cattlefee, cattleratio, officefee + 5, stallweekend + 10, stallnight, stallpct, sponsorTotal);
+  const s1Net = s1Rev.total - exp.total;
+  const s2Net = s2Rev.total - exp.total;
+  const s3Net = s3Rev.total - exp.total;
+
+  document.getElementById('scenarios').innerHTML = `
+    <div class="scenario-card current">
+      <div class="scenario-name">Current</div>
+      <div class="scenario-net ${net >= 0 ? 'pos' : 'neg'}">${fmt(net)}</div>
+      <div class="scenario-detail">${Math.round(margin)}% margin</div>
+    </div>
+    <div class="scenario-card">
+      <div class="scenario-name">+$5 class fee</div>
+      <div class="scenario-net ${s1Net >= 0 ? 'pos' : 'neg'}">${fmt(s1Net)}</div>
+      <div class="scenario-detail">${fmt(s1Net - net)} vs current</div>
+    </div>
+    <div class="scenario-card">
+      <div class="scenario-name">+20 entries</div>
+      <div class="scenario-net ${s2Net >= 0 ? 'pos' : 'neg'}">${fmt(s2Net)}</div>
+      <div class="scenario-detail">${fmt(s2Net - net)} vs current</div>
+    </div>
+  `;
+}
+
+// Initialize with a default sponsor row example
+window.onload = () => { update(); };
+</script>
+</body>
+</html>
