@@ -346,13 +346,21 @@
       <input type="range" id="classfee" min="20" max="75" step="1" value="35" oninput="update()">
     </div>
     <div class="field">
-      <label>Cattle fee <span id="lbl-cattlefee">$85</span></label>
+      <label>Cattle fee (per cow, per class) <span id="lbl-cattlefee">$85</span></label>
       <input type="range" id="cattlefee" min="50" max="150" step="5" value="85" oninput="update()">
     </div>
-    <div class="field">
-      <label>Cattle class ratio <span id="lbl-cattleratio">1 in 4</span></label>
-      <input type="range" id="cattleratio" min="3" max="8" step="1" value="4" oninput="update()">
-      <div class="note">Approx. 1 cattle class per every N classes</div>
+    <div style="background:var(--surface2); border-radius:8px; padding:10px 12px; margin-bottom:0.875rem;">
+      <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-light); margin-bottom:10px;">Cattle class entries <span id="lbl-cattle-total" style="float:right; color:var(--accent)"></span></div>
+      <div class="field" style="margin-bottom:0.75rem;">
+        <label>Cow class entries <span id="lbl-ncow">40</span></label>
+        <input type="range" id="ncow" min="0" max="200" step="5" value="40" oninput="update()">
+        <div class="note">1 cow per entry × $<span id="lbl-cow-calc">85</span>/class</div>
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label>Cutting class entries <span id="lbl-ncutting">20</span></label>
+        <input type="range" id="ncutting" min="0" max="200" step="5" value="20" oninput="update()">
+        <div class="note">2 cows per entry × $<span id="lbl-cutting-calc">85</span>/class</div>
+      </div>
     </div>
     <div class="field">
       <label>Office fee (per entry) <span id="lbl-officefee">$30</span></label>
@@ -550,9 +558,9 @@ function fmt(n) {
   return '$' + Math.round(n).toLocaleString();
 }
 
-function calcRevenue(classes, entries, classfee, cattlefee, cattleratio, officefee, stallweekend, stallnight, haulin, nweekend, nnight, nhaulin, sponsorTotal) {
+function calcRevenue(classes, entries, classfee, cattlefee, ncow, ncutting, officefee, stallweekend, stallnight, haulin, nweekend, nnight, nhaulin, sponsorTotal) {
   const classIncome = classes * classfee;
-  const cattleIncome = (classes / cattleratio) * cattlefee;
+  const cattleIncome = (ncow * 1 + ncutting * 2) * cattlefee;
   const officeIncome = entries * officefee;
   const stallIncome = nweekend * stallweekend + nnight * stallnight * 2.5;
   const haulinIncome = nhaulin * haulin;
@@ -584,7 +592,8 @@ function update() {
   const days = +document.getElementById('days').value;
   const classfee = +document.getElementById('classfee').value;
   const cattlefee = +document.getElementById('cattlefee').value;
-  const cattleratio = +document.getElementById('cattleratio').value;
+  const ncow = +document.getElementById('ncow').value;
+  const ncutting = +document.getElementById('ncutting').value;
   const officefee = +document.getElementById('officefee').value;
   const stallweekend = +document.getElementById('stallweekend').value;
   const stallnight = +document.getElementById('stallnight').value;
@@ -599,7 +608,12 @@ function update() {
   document.getElementById('lbl-days').textContent = days + (days === 1 ? ' day' : ' days');
   document.getElementById('lbl-classfee').textContent = '$' + classfee;
   document.getElementById('lbl-cattlefee').textContent = '$' + cattlefee;
-  document.getElementById('lbl-cattleratio').textContent = '1 in ' + cattleratio;
+  document.getElementById('lbl-ncow').textContent = ncow;
+  document.getElementById('lbl-ncutting').textContent = ncutting;
+  document.getElementById('lbl-cow-calc').textContent = cattlefee;
+  document.getElementById('lbl-cutting-calc').textContent = cattlefee;
+  const cowTotal = ncow * 1 + ncutting * 2;
+  document.getElementById('lbl-cattle-total').textContent = cowTotal + ' cows total';
   document.getElementById('lbl-officefee').textContent = '$' + officefee;
   document.getElementById('lbl-stallweekend').textContent = '$' + stallweekend;
   document.getElementById('lbl-stallnight').textContent = '$' + stallnight;
@@ -618,7 +632,7 @@ function update() {
   });
 
   const sponsorTotal = sponsors.reduce((s, x) => s + (+x.amount || 0), 0);
-  const rev = calcRevenue(classes, entries, classfee, cattlefee, cattleratio, officefee, stallweekend, stallnight, haulin, nweekend, nnight, nhaulin, sponsorTotal);
+  const rev = calcRevenue(classes, entries, classfee, cattlefee, ncow, ncutting, officefee, stallweekend, stallnight, haulin, nweekend, nnight, nhaulin, sponsorTotal);
   const exp = calcExpenses();
   const net = rev.total - exp.total;
   const margin = rev.total > 0 ? (net / rev.total * 100) : 0;
@@ -695,9 +709,9 @@ function update() {
   });
 
   // Scenarios
-  const s1Rev = calcRevenue(classes, entries, classfee + 5, cattlefee, cattleratio, officefee, stallweekend, stallnight, haulin, nweekend, nnight, nhaulin, sponsorTotal);
-  const s2Rev = calcRevenue(classes, entries + 20, classfee, cattlefee, cattleratio, officefee, stallweekend, stallnight, haulin, nweekend + 8, nnight + 8, nhaulin + 4, sponsorTotal);
-  const s3Rev = calcRevenue(classes, entries, classfee, cattlefee, cattleratio, officefee + 5, stallweekend + 10, stallnight, haulin + 10, nweekend, nnight, nhaulin, sponsorTotal);
+  const s1Rev = calcRevenue(classes, entries, classfee + 5, cattlefee, ncow, ncutting, officefee, stallweekend, stallnight, haulin, nweekend, nnight, nhaulin, sponsorTotal);
+  const s2Rev = calcRevenue(classes, entries + 20, classfee, cattlefee, ncow + 8, ncutting + 4, officefee, stallweekend, stallnight, haulin, nweekend + 8, nnight + 8, nhaulin + 4, sponsorTotal);
+  const s3Rev = calcRevenue(classes, entries, classfee, cattlefee, ncow, ncutting, officefee + 5, stallweekend + 10, stallnight, haulin + 10, nweekend, nnight, nhaulin, sponsorTotal);
   const s1Net = s1Rev.total - exp.total;
   const s2Net = s2Rev.total - exp.total;
   const s3Net = s3Rev.total - exp.total;
