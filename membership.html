@@ -562,38 +562,23 @@ function showDetailModal(m) {
 function sendCardEmail(cownNum, btn) {
   if (!CONFIG.emailProxyUrl || CONFIG.emailProxyUrl.indexOf("PASTE") > -1) { alert("Email script URL not configured."); return; }
   var mem = S.members.find(function(m){ return m.cownNum === cownNum; });
-  if (!mem) { alert("Member not found"); return; }
   var orig = btn.textContent;
   btn.textContent = "Sending..."; btn.disabled = true;
-  var payload = JSON.stringify({
-    action: "send", cownNum: cownNum,
-    cardHtml: buildCardHTML(mem), welcomeHtml: buildWelcomeHTML(mem)
-  });
-  fetch(CONFIG.emailProxyUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: payload })
+  fetch(CONFIG.emailProxyUrl + "?action=send&cownNum=" + cownNum)
     .then(function(r){ return r.json(); })
     .then(function(data){
-      if (data.success) {
-        btn.textContent = "Sent!"; btn.classList.add("btn-green");
-        mem.cardSent = true; mem.cardSentDate = "sent";
-        setTimeout(function(){ btn.textContent = orig; btn.disabled = false; btn.classList.remove("btn-green"); }, 3000);
-      } else { btn.textContent = "Failed"; alert("Error: "+(data.error||"Unknown")); setTimeout(function(){ btn.textContent = orig; btn.disabled = false; }, 2000); }
+      if (data.success) { btn.textContent = "Sent!"; btn.classList.add("btn-green"); if(mem){mem.cardSent=true;mem.cardSentDate="sent";} setTimeout(function(){ btn.textContent = orig; btn.disabled = false; btn.classList.remove("btn-green"); }, 3000); }
+      else { btn.textContent = "Failed"; alert("Error: "+(data.error||"Unknown")); setTimeout(function(){ btn.textContent = orig; btn.disabled = false; }, 2000); }
     })
     .catch(function(e){ btn.textContent = "Error"; alert("Network error: "+e.message); setTimeout(function(){ btn.textContent = orig; btn.disabled = false; }, 2000); });
 }
-  function sendBatchEmails(cownNums, btn, force) {
+function sendBatchEmails(cownNums, btn, force) {
   if (!CONFIG.emailProxyUrl || CONFIG.emailProxyUrl.indexOf("PASTE") > -1) { alert("Email script URL not configured."); return; }
   var orig = btn.textContent;
   btn.textContent = "Sending 0/"+cownNums.length+"..."; btn.disabled = true;
-  var cards = cownNums.map(function(num) {
-    var mem = S.members.find(function(m){ return m.cownNum === num; });
-    if (!mem) return { cownNum: num };
-    return { cownNum: num, cardHtml: buildCardHTML(mem), welcomeHtml: buildWelcomeHTML(mem) };
-  });
-  fetch(CONFIG.emailProxyUrl, { method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action: "sendBatch", nums: cownNums.join(","), cards: cards, force: !!force }) })
-    .then(function(r){ return r.json(); })
-    .then(function(data){ btn.textContent = "Sent "+data.sent+"/"+data.total; if (data.failed > 0) alert(data.failed + " failed."); setTimeout(function(){ btn.textContent = orig; btn.disabled = false; }, 4000); })
-    .catch(function(e){ btn.textContent = "Error"; alert("Network error: "+e.message); setTimeout(function(){ btn.textContent = orig; btn.disabled = false; }, 2000); });
+  var url = CONFIG.emailProxyUrl + "?action=sendBatch&nums=" + cownNums.join(",");
+  if (force) url += "&force=true";
+  fetch(url).then(function(r){ return r.json(); }).then(function(data){ btn.textContent = "Sent "+data.sent+"/"+data.total; if (data.failed > 0) alert(data.failed + " failed."); setTimeout(function(){ btn.textContent = orig; btn.disabled = false; }, 4000); }).catch(function(e){ btn.textContent = "Error"; alert("Network error: "+e.message); setTimeout(function(){ btn.textContent = orig; btn.disabled = false; }, 2000); });
 }
 
 // ===== LOAD =====
