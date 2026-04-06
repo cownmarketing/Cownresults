@@ -401,7 +401,7 @@ function renderCards(){
       t+="<td class='ctr'>"+fmtDate(m.expDate)+"</td>";
       t+="<td class='ctr'>"+sentBadge(m)+"</td>";
       t+="<td><button class='btn btn-dark btn-sm view-card-btn' data-num='"+m.cownNum+"'>View</button>";
-      if(m.sentStatus==="send"&&m.email) t+=" <button class='btn btn-green btn-sm send-btn' data-num='"+m.cownNum+"'>&#9993; Send</button>";
+      if(m.email) t+=" <button class='btn btn-green btn-sm send-btn' data-num='"+m.cownNum+"'>&#9993; Send</button>";
       t+="</td></tr>";
     });
     t+="</tbody></table></div>";
@@ -516,7 +516,7 @@ function showCardModal(m){
   h+="<div class='btn-row' style='margin-top:1rem'>";
   h+="<button class='btn btn-dark' id='card-close'>Close</button>";
   h+=" <button class='btn btn-accent' id='card-print'>&#128424; Print / Save PDF</button>";
-  if(S.adminUnlocked&&m.sentStatus==="send"&&m.email) h+=" <button class='btn btn-green' id='card-email' data-num='"+m.cownNum+"'>&#9993; Send Card</button>";
+  if(S.adminUnlocked&&m.email) h+=" <button class='btn btn-green' id='card-email' data-num='"+m.cownNum+"'>&#9993; Send Card</button>";
   if(S.adminUnlocked&&!m.email) h+=" <span style='font-size:.75rem;color:var(--red)'>No email on file</span>";
   h+="</div></div></div>";
   root.innerHTML=h;
@@ -565,7 +565,6 @@ function showDetailModal(m){
 function sendCardEmail(cownNum, btn){
   var mem=S.members.find(function(m){ return m.cownNum===cownNum; });
   if(!mem){ alert("Member not found"); return; }
-  if(mem.sentStatus!=="send"){ alert("This member is not marked 'send' in the Sent column."); return; }
   if(!mem.email){ alert("No email address on file."); return; }
   var orig=btn.textContent;
   btn.textContent="Sending..."; btn.disabled=true;
