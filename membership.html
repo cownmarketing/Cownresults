@@ -282,7 +282,7 @@ function renderLookup(){
     });
     t+="</tbody></table>";
     res.innerHTML=t;
-    res.querySelectorAll(".lc-btn").forEach(function(b){ b.addEventListener("click",function(){ var mem=S.members.find(function(m){ return m.cownNum===parseInt(b.dataset.num); }); if(mem) showCardModal(mem); }); });
+    res.querySelectorAll(".lc-btn").forEach(function(b){ b.addEventListener("click",function(){ var mem=S.members.find(function(m){ return m.cownNum===parseInt(this.dataset.num); }.bind(this)); if(mem) showCardModal(mem); }); });
   });
 }
 
@@ -407,8 +407,8 @@ function renderCards(){
     });
     t+="</tbody></table></div>";
     res.innerHTML=t;
-    res.querySelectorAll(".view-card-btn").forEach(function(b){ b.addEventListener("click",function(){ var mem=S.members.find(function(m){ return m.cownNum===parseInt(b.dataset.num); }); if(mem) showCardModal(mem); }); });
-    res.querySelectorAll(".send-btn").forEach(function(b){ b.addEventListener("click",function(){ sendCardEmail(parseInt(b.dataset.num),b); }); });
+    res.querySelectorAll(".view-card-btn").forEach(function(b){ b.addEventListener("click",function(){ var mem=S.members.find(function(m){ return m.cownNum===parseInt(this.dataset.num); }.bind(this)); if(mem) showCardModal(mem); }); });
+    res.querySelectorAll(".send-btn").forEach(function(b){ b.addEventListener("click",function(){ sendCardEmail(parseInt(this.dataset.num),this); }); });
   }
 
   renderCardList("");
