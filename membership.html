@@ -145,7 +145,7 @@ function parseDate(v){
   var m2=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
   if(m2){ var d2=new Date(parseInt(m2[3]),parseInt(m2[1])-1,parseInt(m2[2])); if(!isNaN(d2.getTime())) return d2; }
   var n=parseFloat(s);
-  if(!isNaN(n)&&n>30000&&n<60000){ var d3=new Date((n-25569)*86400000); if(!isNaN(d3.getTime())) return d3; }
+  if(!isNaN(n)&&n>30000&&n<60000){ var utc=(n-25569)*86400000; var d3=new Date(utc+new Date(utc).getTimezoneOffset()*60000); if(!isNaN(d3.getTime())) return d3; }
   return null;
 }
 
