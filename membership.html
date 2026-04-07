@@ -590,21 +590,39 @@ function sendCardEmail(cownNum, btn){
 
 function sendBatchEmails(cownNums, btn){
   var orig=btn.textContent;
-  btn.textContent="Sending 0/"+cownNums.length+"..."; btn.disabled=true;
-  var url=CONFIG.emailProxyUrl+"?action=sendBatch&nums="+cownNums.join(",");
-  fetch(url)
-    .then(function(r){ return r.json(); })
-    .then(function(data){
-      btn.textContent="Done! Sent "+data.sent+"/"+data.total;
-      if(data.failed>0) alert(data.failed+" failed to send.");
-      if(data.skipped>0) alert(data.skipped+" skipped (already sent or marked renew).");
+  var total=cownNums.length, sent=0, failed=0, failedNames=[];
+  btn.disabled=true;
+
+  function sendNext(i){
+    if(i>=total){
+      btn.textContent="Done! Sent "+sent+"/"+total;
+      if(failed>0) alert(failed+" failed:\n"+failedNames.join("\n"));
       setTimeout(function(){ btn.textContent=orig; btn.disabled=false; },4000);
-    })
-    .catch(function(e){
-      btn.textContent="Error";
-      alert("Network error: "+e.message);
-      setTimeout(function(){ btn.textContent=orig; btn.disabled=false; },2000);
-    });
+      return;
+    }
+    var num=cownNums[i];
+    var mem=S.members.find(function(m){ return m.cownNum===num; });
+    btn.textContent="Sending "+(i+1)+"/"+total+(mem?" — "+mem.first:"")+"...";
+    fetch(CONFIG.emailProxyUrl+"?action=send&cownNum="+num)
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if(data.success){
+          sent++;
+          if(mem){ mem.sentStatus="sent"; mem.sentRaw="sent (today)"; }
+        } else {
+          failed++;
+          failedNames.push((mem?mem.fullName:"#"+num)+": "+(data.error||"unknown error"));
+        }
+        setTimeout(function(){ sendNext(i+1); },800);
+      })
+      .catch(function(e){
+        failed++;
+        failedNames.push((mem?mem.fullName:"#"+num)+": network error");
+        setTimeout(function(){ sendNext(i+1); },800);
+      });
+  }
+
+  sendNext(0);
 }
 
 // ===== LOAD =====
