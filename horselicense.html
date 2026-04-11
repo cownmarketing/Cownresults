@@ -667,26 +667,6 @@ function showDetailModal(h){
   });
 }
 
-// ===== JSONP HELPER =====
-// fetch() blocks in Firefox/Safari/Edge when opening HTML as a local file.
-// JSONP uses a script tag instead — works in every browser, no CORS issues.
-function jsonpRequest(url, callback){
-  var cbName = "jsonp_cb_" + Date.now() + "_" + Math.floor(Math.random()*10000);
-  window[cbName] = function(data){
-    delete window[cbName];
-    document.head.removeChild(script);
-    callback(null, data);
-  };
-  var script = document.createElement("script");
-  script.onerror = function(){
-    delete window[cbName];
-    document.head.removeChild(script);
-    callback(new Error("Network error — could not reach proxy"));
-  };
-  script.src = url + (url.indexOf("?") > -1 ? "&" : "?") + "callback=" + cbName + "&ts=" + Date.now();
-  document.head.appendChild(script);
-}
-
 // ===== EMAIL =====
 function sendLicenseEmail(rowIdx, btn){
   var horse = S.horses.find(function(h){ return h.rowIndex === rowIdx; });
@@ -694,23 +674,24 @@ function sendLicenseEmail(rowIdx, btn){
   if(!horse.ownerEmail){ alert("No email address on file."); return; }
   var orig = btn.textContent;
   btn.textContent = "Sending..."; btn.disabled = true;
-  jsonpRequest(CONFIG.proxyUrl + "?action=sendLicense&rowIdx="+rowIdx, function(err, data){
-    if(err){
+  fetch(CONFIG.proxyUrl + "?action=sendLicense&rowIdx="+rowIdx+"&ts="+Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(data.success){
+        btn.textContent = "Sent!"; btn.classList.add("btn-green");
+        horse.sentStatus = "sent"; horse.sentRaw = "sent";
+        setTimeout(function(){ btn.textContent = orig; btn.disabled = false; btn.classList.remove("btn-green"); }, 3000);
+      } else {
+        btn.textContent = "Failed";
+        alert("Error: "+(data.error||"Unknown error"));
+        setTimeout(function(){ btn.textContent = orig; btn.disabled = false; }, 2000);
+      }
+    })
+    .catch(function(e){
       btn.textContent = "Error";
-      alert("Network error: "+err.message);
+      alert("Network error: "+e.message);
       setTimeout(function(){ btn.textContent = orig; btn.disabled = false; }, 2000);
-      return;
-    }
-    if(data.success){
-      btn.textContent = "Sent!"; btn.classList.add("btn-green");
-      horse.sentStatus = "sent"; horse.sentRaw = "sent";
-      setTimeout(function(){ btn.textContent = orig; btn.disabled = false; btn.classList.remove("btn-green"); }, 3000);
-    } else {
-      btn.textContent = "Failed";
-      alert("Error: "+(data.error||"Unknown error"));
-      setTimeout(function(){ btn.textContent = orig; btn.disabled = false; }, 2000);
-    }
-  });
+    });
 }
 
 function sendBatchLicenses(rowIdxs, btn){
@@ -727,11 +708,17 @@ function sendBatchLicenses(rowIdxs, btn){
     var idx = rowIdxs[i];
     var horse = S.horses.find(function(h){ return h.rowIndex === idx; });
     btn.textContent = "Sending "+(i+1)+"/"+total+(horse?" — "+horse.horse:"")+"...";
-    jsonpRequest(CONFIG.proxyUrl + "?action=sendLicense&rowIdx="+idx, function(err, data){
-      if(!err && data.success){ sent++; if(horse){ horse.sentStatus="sent"; horse.sentRaw="sent"; } }
-      else { failed++; failedNames.push((horse?horse.horse+"  ("+horse.owner+")":"#"+idx)+": "+((data&&data.error)||"error")); }
-      setTimeout(function(){ sendNext(i+1); }, 800);
-    });
+    fetch(CONFIG.proxyUrl + "?action=sendLicense&rowIdx="+idx+"&ts="+Date.now())
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if(data.success){ sent++; if(horse){ horse.sentStatus="sent"; horse.sentRaw="sent"; } }
+        else { failed++; failedNames.push((horse?horse.horse+"  ("+horse.owner+")":"#"+idx)+": "+(data.error||"error")); }
+        setTimeout(function(){ sendNext(i+1); }, 800);
+      })
+      .catch(function(e){
+        failed++; failedNames.push((horse?horse.horse:"#"+idx)+": network error");
+        setTimeout(function(){ sendNext(i+1); }, 800);
+      });
   }
   sendNext(0);
 }
@@ -739,44 +726,39 @@ function sendBatchLicenses(rowIdxs, btn){
 // ===== LOAD =====
 function autoLoad(){
   showView("loading");
-  jsonpRequest(CONFIG.proxyUrl + "?type=" + CONFIG.sheetType, function(err, data){
-    if(err){
-      showLoadError(err.message);
-      return;
-    }
-    if(!data || !data.horses){
-      showLoadError("Unexpected response — missing horses array. Check Apps Script is deployed.");
-      return;
-    }
-    S.horses = parseHorseJSON(data);
-    showView("lookup");
-  });
-}
-
-function showLoadError(msg){
-  document.getElementById("loading-view").innerHTML =
-    "<div class='card'>"
-    +"<p class='empty' style='color:var(--red)'>Could not load from Google Drive.</p>"
-    +"<p style='text-align:center;font-size:.8rem;color:var(--muted);margin-top:.5rem'>"+esc(msg)+"</p>"
-    +"<div class='btn-row' style='justify-content:center;margin-top:1rem'>"
-    +"<button class='btn btn-accent' onclick='autoLoad()'>Retry</button>"
-    +"<label class='btn btn-dark' style='cursor:pointer'>Upload xlsx Instead"
-    +"<input type='file' accept='.xlsx,.xls,.csv' id='file-upload-fallback' style='display:none'></label>"
-    +"</div>"
-    +"<p style='text-align:center;margin-top:.75rem;font-size:.75rem;color:var(--muted)'>"
-    +"Note: uploading a file skips the member merge — CoWN numbers and emails won't be filled in automatically.</p>"
-    +"</div>";
-  var fu = document.getElementById("file-upload-fallback");
-  if(fu) fu.addEventListener("change", function(ev){
-    var file = ev.target.files[0]; if(!file) return;
-    var reader = new FileReader();
-    reader.onload = function(e2){
-      var wb = XLSX.read(new Uint8Array(e2.target.result), { type:"array" });
-      S.horses = parseHorseXLSX(wb);
+  fetch(CONFIG.proxyUrl + "?type=" + CONFIG.sheetType + "&ts=" + Date.now())
+    .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+    .then(function(data){
+      if(!data || !data.horses) throw new Error("Unexpected response — missing horses array.");
+      S.horses = parseHorseJSON(data);
       showView("lookup");
-    };
-    reader.readAsArrayBuffer(file);
-  });
+    })
+    .catch(function(e){
+      console.error("Load error:", e);
+      document.getElementById("loading-view").innerHTML =
+        "<div class='card'>"
+        +"<p class='empty' style='color:var(--red)'>Could not load from Google Drive.</p>"
+        +"<p style='text-align:center;font-size:.8rem;color:var(--muted);margin-top:.5rem'>"+esc(e.message)+"</p>"
+        +"<div class='btn-row' style='justify-content:center;margin-top:1rem'>"
+        +"<button class='btn btn-accent' onclick='autoLoad()'>Retry</button>"
+        +"<label class='btn btn-dark' style='cursor:pointer'>Upload xlsx Instead"
+        +"<input type='file' accept='.xlsx,.xls,.csv' id='file-upload-fallback' style='display:none'></label>"
+        +"</div>"
+        +"<p style='text-align:center;margin-top:.75rem;font-size:.75rem;color:var(--muted)'>"
+        +"Note: uploading a file skips the member merge.</p>"
+        +"</div>";
+      var fu = document.getElementById("file-upload-fallback");
+      if(fu) fu.addEventListener("change", function(ev){
+        var file = ev.target.files[0]; if(!file) return;
+        var reader = new FileReader();
+        reader.onload = function(e2){
+          var wb = XLSX.read(new Uint8Array(e2.target.result), { type:"array" });
+          S.horses = parseHorseXLSX(wb);
+          showView("lookup");
+        };
+        reader.readAsArrayBuffer(file);
+      });
+    });
 }
 
 // Set logo and boot
