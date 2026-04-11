@@ -183,8 +183,8 @@ function parseHorseXLSX(wb){
     horses.push({
       horse:        horse,
       owner:        owner,
-      horseNum:     String(lk["cown horse number"] || lk["horse number"] || lk["horse #"] || lk["cown horse #"] || "").trim(),
-      ownerCownNum: String(lk["cown #"] || lk["cown number"] || "").trim(),
+      horseNum:     String(lk["cown horse number"] || lk["cown horse #"] || lk["horse number"] || lk["horse #"] || "").trim(),
+      ownerCownNum: "",
       ownerEmail:   String(lk["email"] || lk["recipient"] || "").trim(),
       rider:        String(lk["rider"] || lk["rider name"] || "").trim(),
       riderCownNum: "",
@@ -261,7 +261,7 @@ document.getElementById("pwd-input").addEventListener("keydown", function(e){ if
 function renderLookup(){
   var el = document.getElementById("lookup-view");
   el.innerHTML = "<div class='card'><div class='card-hdr'><h2>Horse License Lookup</h2><p>Search by horse name, owner, rider, or CoWN number</p></div>"
-    +"<div class='search-wrap'><span class='search-icon'>&#128269;</span><input class='search-box' id='lookup-q' placeholder='Enter horse, owner, or CoWN #...'></div>"
+    +"<div class='search-wrap'><span class='search-icon'>&#128269;</span><input class='search-box' id='lookup-q' placeholder='Enter horse, owner, rider, or year...'></div>"
     +"<div id='lookup-results'></div></div>";
 
   document.getElementById("lookup-q").addEventListener("input", function(){
@@ -275,7 +275,7 @@ function renderLookup(){
           || h.cownNum.toLowerCase().indexOf(q) > -1;
     });
     if(!matches.length){ res.innerHTML = "<p class='empty'>No licenses found</p>"; return; }
-    var t = "<table><thead><tr><th>Horse</th><th>Owner</th><th>CoWN #</th><th>Rider</th><th>Year</th><th></th></tr></thead><tbody>";
+    var t = "<table><thead><tr><th>Horse</th><th>Owner</th><th>Owner CoWN #</th><th>Rider</th><th>Year</th><th></th></tr></thead><tbody>";
     matches.slice(0, 25).forEach(function(h){
       t += "<tr><td class='bold'>"+esc(h.horse)+"</td><td>"+esc(h.owner)+ownerBadge(h)+"</td>"
          +"<td class='ctr'>"+esc(h.ownerCownNum||"—")+"</td><td>"+esc(h.rider)+"</td>"
@@ -332,7 +332,7 @@ function renderDashboard(){
       return h.horse.toLowerCase().indexOf(q) > -1 || h.owner.toLowerCase().indexOf(q) > -1
           || h.rider.toLowerCase().indexOf(q) > -1 || String(h.year).indexOf(q) > -1;
     }) : S.horses;
-    var t = "<div style='overflow-x:auto'><table><thead><tr><th>Horse</th><th>Owner</th><th>CoWN #</th><th>Rider</th><th>Year</th><th>License Status</th></tr></thead><tbody>";
+    var t = "<div style='overflow-x:auto'><table><thead><tr><th>Horse</th><th>Owner</th><th>Owner CoWN #</th><th>Rider</th><th>Year</th><th>License Status</th></tr></thead><tbody>";
     list.slice(0, 100).forEach(function(h){
       t += "<tr class='dash-row' data-idx='"+h.rowIndex+"' style='cursor:pointer'>"
          +"<td class='bold'>"+esc(h.horse)+"</td><td>"+esc(h.owner)+ownerBadge(h)+"</td>"
@@ -398,7 +398,7 @@ function renderLicenses(){
     });
     var res = document.getElementById("lic-results");
     if(!list.length){ res.innerHTML = "<p class='empty'>No licenses match</p>"; return; }
-    var t = "<div style='overflow-x:auto'><table><thead><tr><th>Horse</th><th>Owner</th><th>CoWN #</th><th>Rider</th><th>Year</th><th>Status</th><th></th></tr></thead><tbody>";
+    var t = "<div style='overflow-x:auto'><table><thead><tr><th>Horse</th><th>Owner</th><th>Owner CoWN #</th><th>Rider</th><th>Year</th><th>Status</th><th></th></tr></thead><tbody>";
     list.slice(0, 60).forEach(function(h){
       t += "<tr><td class='bold'>"+esc(h.horse)+"</td><td>"+esc(h.owner)+ownerBadge(h)+"</td>"
          +"<td class='ctr'>"+esc(h.ownerCownNum||"—")+"</td><td>"+esc(h.rider)+"</td>"
