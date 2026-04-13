@@ -405,7 +405,7 @@ function renderLicenses(){
          +"<td class='ctr'><span class='badge badge-year'>"+h.year+"</span></td>"
          +"<td class='ctr'>"+sentBadge(h)+"</td>"
          +"<td><button class='btn btn-dark btn-sm view-lic-btn' data-idx='"+h.rowIndex+"'>View</button>"
-         +(h.ownerEmail ? " <button class='btn btn-green btn-sm send-lic-btn' data-idx='"+h.rowIndex+"'>&#9993; Send</button>"
+         +(h.riderEmail ? " <button class='btn btn-green btn-sm send-lic-btn' data-idx='"+h.rowIndex+"'>&#9993; Send</button>"
                         : " <span style='font-size:.7rem;color:var(--red)'>No email</span>")
          +"</td></tr>";
     });
@@ -611,9 +611,9 @@ function showLicenseModal(h){
   html += "<div class='btn-row' style='margin-top:1rem'>";
   html += "<button class='btn btn-dark' id='lic-close'>Close</button>";
   html += " <button class='btn btn-accent' id='lic-print'>&#128424; Print / Save PDF</button>";
-  if(S.adminUnlocked && h.ownerEmail)
+  if(S.adminUnlocked && h.riderEmail)
     html += " <button class='btn btn-green' id='lic-email' data-idx='"+h.rowIndex+"'>&#9993; Send License</button>";
-  if(S.adminUnlocked && !h.ownerEmail)
+  if(S.adminUnlocked && !h.riderEmail)
     html += " <span style='font-size:.75rem;color:var(--red)'>No email — owner not matched in membership</span>";
   html += "</div></div></div>";
   root.innerHTML = html;
@@ -644,7 +644,7 @@ function showDetailModal(h){
   html += "<table style='margin:.75rem 0;font-size:.85rem'><tbody>";
   html += "<tr><td style='color:var(--muted);padding-right:1rem'>Owner</td><td>"+esc(h.owner)+ownerBadge(h)+"</td></tr>";
   html += "<tr><td style='color:var(--muted)'>Owner CoWN #</td><td>"+(h.ownerCownNum||"<span style='color:var(--red)'>Not found in membership</span>")+"</td></tr>";
-  html += "<tr><td style='color:var(--muted)'>Owner Email</td><td>"+(h.ownerEmail||"<span style='color:var(--red)'>Not found</span>")+"</td></tr>";
+  html += "<tr><td style='color:var(--muted)'>Rider Email</td><td>"+(h.riderEmail||"<span style='color:var(--red)'>Not found</span>")+"</td></tr></tr>";
   if(h.rider){
     html += "<tr><td style='color:var(--muted)'>Rider</td><td>"+esc(h.rider)+"</td></tr>";
     html += "<tr><td style='color:var(--muted)'>Rider CoWN #</td><td>"+(h.riderCownNum||"<span style='color:var(--muted)'>—</span>")+"</td></tr>";
@@ -671,7 +671,7 @@ function showDetailModal(h){
 function sendLicenseEmail(rowIdx, btn){
   var horse = S.horses.find(function(h){ return h.rowIndex === rowIdx; });
   if(!horse){ alert("License not found"); return; }
-  if(!horse.ownerEmail){ alert("No email address on file."); return; }
+  if(!horse.riderEmail){ alert("No email address on file."); return; }
   var orig = btn.textContent;
   btn.textContent = "Sending..."; btn.disabled = true;
   fetch(CONFIG.proxyUrl + "?action=sendLicense&rowIdx="+rowIdx+"&ts="+Date.now())
