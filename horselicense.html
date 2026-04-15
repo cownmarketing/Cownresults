@@ -456,19 +456,22 @@ function renderLicenses(){
     S.horses.forEach(function(h){ win.document.write("<div class='license-page'>"+buildLicenseHTML(h)+"</div>"); });
     win.document.write("</body></html>");
     win.document.close();
-    setTimeout
-// Set logo via blob URL (avoids ERR_INVALID_URL on long base64 strings)
-(function(){
-  try {
-    var parts = LOGO_IMG.split(',');
-    var byteStr = atob(parts[1]);
-    var ab = new ArrayBuffer(byteStr.length);
-    var ia = new Uint8Array(ab);
-    for(var i = 0; i < byteStr.length; i++) ia[i] = byteStr.charCodeAt(i);
-    var blob = new Blob([ab], {type:'image/jpeg'});
-    document.getElementById('hdr-logo').src = URL.createObjectURL(blob);
-  } catch(e) {}
-})();
+    setTimeout(function(){ win.print(); }, 500);
+  });
+
+  var batchBtn = document.getElementById("batch-send");
+  if(batchBtn){
+    batchBtn.addEventListener("click", function(){
+      var q2 = S.horses.filter(function(h){ return h.sentStatus === "send"; });
+      if(!q2.length){ alert("No licenses are queued to send."); return; }
+      if(!confirm("Send horse licenses to "+q2.length+" entries marked 'send'?")) return;
+      var idxs = q2.map(function(h){ return h.rowIndex; });
+      sendBatchLicenses(idxs, this);
+    });
+  }
+}
+// Set logo using the same base64 data as the membership hub
+document.getElementById("hdr-logo").src = LOGO_IMG;
 autoLoad();
 </script>
 </body>
