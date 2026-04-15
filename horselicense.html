@@ -1,769 +1,672 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CoWN Horse License Hub</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<style>
-:root{
-  --bg:#1a1a2e;--card:#16213e;--accent:#D4A04A;--green:#27ae60;--red:#e74c3c;
-  --blue:#2980b9;--text:#e0e0e0;--muted:#888;--border:#2a2a4a
-}
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Source Sans 3',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-.hdr{background:var(--card);border-bottom:2px solid var(--accent);padding:.75rem 1.5rem;text-align:center}
-.hdr-logo{height:48px}
-.hdr span{display:block;font-family:'Oswald',sans-serif;font-size:.85rem;color:var(--accent);letter-spacing:.08em;margin-top:.15rem}
-.tabs{display:flex;gap:.25rem;background:var(--card);padding:.25rem .5rem;border-bottom:1px solid var(--border);overflow-x:auto}
-.tab{background:none;border:none;color:var(--muted);padding:.5rem .75rem;cursor:pointer;font-size:.8rem;font-family:'Oswald',sans-serif;white-space:nowrap;border-radius:4px}
-.tab:hover{color:var(--text)}
-.tab.active{color:var(--accent);background:rgba(212,160,74,.1)}
-.main{max-width:1100px;margin:0 auto;padding:1rem}
-.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
-.card-hdr h2{font-family:'Oswald',sans-serif;color:var(--accent);font-size:1.3rem;margin-bottom:.25rem}
-.card-hdr p{color:var(--muted);font-size:.85rem}
-.search-wrap{position:relative;margin:.75rem 0}
-.search-icon{position:absolute;left:.75rem;top:50%;transform:translateY(-50%);color:var(--muted)}
-.search-box{width:100%;padding:.6rem .6rem .6rem 2.2rem;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:.9rem}
-.search-box:focus{outline:none;border-color:var(--accent)}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.75rem;margin:.75rem 0}
-.stat{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.75rem;text-align:center}
-.stat .num{font-family:'Oswald',sans-serif;font-size:1.8rem;font-weight:700}
-.stat .lbl{font-size:.75rem;color:var(--muted);margin-top:.15rem}
-.gold-stat .num{color:var(--accent)}
-.green-stat .num{color:var(--green)}
-.blue-stat .num{color:var(--blue)}
-.total-stat .num{color:var(--text)}
-table{width:100%;border-collapse:collapse;font-size:.85rem}
-th{text-align:left;padding:.5rem;border-bottom:2px solid var(--accent);color:var(--accent);font-family:'Oswald',sans-serif;cursor:pointer;white-space:nowrap}
-td{padding:.5rem;border-bottom:1px solid var(--border)}
-.ctr{text-align:center}
-.bold{font-weight:600}
-.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:600}
-.badge-year{background:rgba(212,160,74,.15);color:var(--accent)}
-.badge-send{background:rgba(39,174,96,.2);color:#2ecc71;border:1px solid #2ecc71}
-.badge-sent{background:rgba(39,174,96,.1);color:var(--green)}
-.badge-none{background:rgba(136,136,136,.1);color:var(--muted)}
-.btn{display:inline-block;padding:.4rem .8rem;border:none;border-radius:6px;cursor:pointer;font-size:.8rem;font-weight:600;font-family:'Source Sans 3',sans-serif}
-.btn-accent{background:var(--accent);color:#1a1a1a}
-.btn-dark{background:var(--bg);color:var(--text);border:1px solid var(--border)}
-.btn-green{background:var(--green);color:#fff}
-.btn-blue{background:var(--blue);color:#fff}
-.btn-sm{padding:.25rem .5rem;font-size:.75rem}
-.btn:disabled{opacity:.5;cursor:default}
-.btn-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.75rem}
-.pills{display:flex;gap:.25rem;flex-wrap:wrap}
-.pill{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:.25rem .6rem;font-size:.75rem;cursor:pointer;color:var(--muted)}
-.pill.active{border-color:var(--accent);color:var(--accent);background:rgba(212,160,74,.1)}
-.empty{color:var(--muted);text-align:center;padding:2rem}
-.hidden{display:none!important}
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:flex;align-items:center;justify-content:center;padding:1rem}
-.modal{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;max-width:580px;width:100%;max-height:90vh;overflow-y:auto}
-#pwd-gate{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:center;justify-content:center}
-#pwd-gate div{background:var(--card);padding:2rem;border-radius:12px;text-align:center}
-#pwd-input{padding:.5rem;margin:.5rem 0;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);text-align:center}
-/* License card print styles */
-@media print{
-  body{background:#fff;color:#000}
-  .license-card{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-}
-/* Setup guide */
-.setup-step{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:.75rem}
-.setup-step h4{font-family:'Oswald',sans-serif;color:var(--accent);margin-bottom:.4rem}
-.setup-step p,.setup-step li{font-size:.85rem;color:var(--muted);line-height:1.6}
-.setup-step ul{margin-left:1.2rem}
-.setup-step code{background:rgba(212,160,74,.1);color:var(--accent);padding:1px 6px;border-radius:4px;font-size:.8rem}
-</style>
-</head>
-<body>
+const SHEET_ID = '10hExShqrXbEI6-WJp49ovWFOE0z1a22dCncgw97xmBo';
+const MEMBERSHIP_SHEET_NAME = 'Memberships';
+const SENDER_NAME = 'CoWN - Colorado, Wyoming & Nebraska Stock Horse Association';
+const REPLY_TO = 'cownmarketing@gmail.com';
 
-<div class="hdr">
-  <img id="hdr-logo" class="hdr-logo" alt="CoWN">
-  <span>HORSE LICENSE HUB</span>
-</div>
-<div class="tabs" id="tabs"></div>
+// ===== HORSE LICENSE SETTINGS =====
+// Set this to the Google Drive file ID of your horse license spreadsheet.
+// Find it in the URL: docs.google.com/spreadsheets/d/THIS_PART_HERE/edit
+const HORSE_SHEET_ID = 'PASTE_YOUR_HORSE_SHEET_ID_HERE';
+const HORSE_SHEET_NAME = 'Sheet1'; // change to match the tab name in your horse sheet
 
-<div id="pwd-gate" class="hidden">
-  <div>
-    <p style="font-family:Oswald;color:var(--accent)">Admin Access</p>
-    <input type="password" id="pwd-input" placeholder="Enter password">
-    <br><button class="btn btn-accent" id="pwd-btn">Unlock</button>
-    <button class="btn btn-dark" id="pwd-cancel" style="margin-left:.5rem">Cancel</button>
-  </div>
-</div>
+// ===== SENT COLUMN VALUES =====
+// "send"          = send the card/license
+// "sent 4/6/2026" = already sent, skip
+// "renew"         = do not send (membership only)
 
-<div class="main">
-  <div id="loading-view"><div class="card"><p class="empty">Loading horse license data...</p></div></div>
-  <div id="lookup-view"  class="hidden"></div>
-  <div id="dashboard-view" class="hidden"></div>
-  <div id="licenses-view" class="hidden"></div>
-  <div id="setup-view"  class="hidden"></div>
-  <div id="settings-view" class="hidden"></div>
-</div>
-<div id="modal-root"></div>
-
-<script>
-// ===== LOGO (same as membership hub) =====
-var LOGO_IMG = "data:image/jpeg;base64,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";
-
-// ===== CONFIG =====
-var CONFIG = {
-  // Same proxy URL as membership hub — append &type=horse to distinguish the sheet
-  proxyUrl: "https://script.google.com/macros/s/AKfycbzwTmJwxmPFdCnvKtovw1Lp9p6iDbFtfpEhR8IN74cXrPypny3xHUNfS6TM04Q92vn9Hw/exec",
-  password: "cown2026",
-  // Change this to match whatever your horse license sheet tab is named in Google Drive
-  sheetType: "horse"
-};
-
-// ===== STATE =====
-var S = { view: "loading", horses: [], adminUnlocked: false, pendingView: null };
-
-// ===== HELPERS =====
-function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-
-function currentYear(){ return new Date().getFullYear(); }
-
-function parseSentStatus(raw){
-  var s = String(raw||"").trim().toLowerCase();
-  if(s === "send") return "send";
-  if(s.indexOf("sent") === 0) return "sent";
-  return "";
+function parseSentStatus(val) {
+  var s = String(val || '').trim().toLowerCase();
+  if (s === 'send') return 'send';
+  if (s === 'renew') return 'renew';
+  if (s.indexOf('sent') === 0) return 'sent';
+  return '';
 }
 
-function sentBadge(h){
-  if(h.sentStatus === "send") return "<span class='badge badge-send'>&#9993; Send</span>";
-  if(h.sentStatus === "sent") return "<span class='badge badge-sent'>&#10003; Sent</span>";
-  return "<span class='badge badge-none'>—</span>";
+// ===== SHEET MENU =====
+
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('CoWN Tools')
+    .addItem('Send Queued Membership Cards (marked "send")', 'sendQueuedCards')
+    .addItem('Send All Active Membership Cards (resend)', 'sendAllActiveCards')
+    .addSeparator()
+    .addItem('Send Queued Horse Licenses (marked "send")', 'sendQueuedLicenses')
+    .addSeparator()
+    .addItem('Check Email Quota', 'checkQuota')
+    .addToUi();
 }
 
-function ownerBadge(h){
-  if(h.ownerFound === false)
-    return " <span class='badge' style='background:rgba(231,76,60,.15);color:var(--red)' title='Owner name not found in membership sheet'>&#9888; No match</span>";
-  if(h.ownerCownNum)
-    return " <span class='badge badge-year'>#"+esc(h.ownerCownNum)+"</span>";
-  return "";
+// ===== MEMBERSHIP MENU ACTIONS =====
+
+function sendQueuedCards() {
+  var members = getActiveMembers().filter(function(m){ return m.sentStatus === 'send' && m.email; });
+  if (!members.length) {
+    SpreadsheetApp.getUi().alert('No members are marked "send" in the Sent column.');
+    return;
+  }
+  var ui = SpreadsheetApp.getUi();
+  if (ui.alert('Send Cards', 'Send membership cards to ' + members.length + ' members marked "send"?', ui.ButtonSet.YES_NO) !== ui.Button.YES) return;
+  runBatch(members);
 }
 
-// ===== PARSE DATA =====
-// Called when proxy returns JSON (merged server-side by Apps Script)
-function parseHorseJSON(data){
-  var raw = data.horses || [];
-  console.log("Received " + raw.length + " horse licenses from proxy. Member index size: " + (data.memberCount || "?"));
-  // The proxy already did the merge — just normalise sentStatus client-side
-  // in case the sheet value changed since the proxy built the object
-  raw.forEach(function(h){
-    h.sentStatus = parseSentStatus(h.sentRaw || h.sentStatus || "");
-  });
-  return raw.sort(function(a,b){ return a.owner.localeCompare(b.owner) || a.horse.localeCompare(b.horse); });
+function sendAllActiveCards() {
+  var members = getActiveMembers().filter(function(m){ return m.sentStatus !== 'renew' && m.sentStatus !== 'sent' && m.email; });
+  if (!members.length) {
+    SpreadsheetApp.getUi().alert('No eligible members found (all are sent or marked renew).');
+    return;
+  }
+  var ui = SpreadsheetApp.getUi();
+  if (ui.alert('Send Cards', 'Send to ' + members.length + ' active members (skipping renew and already sent)?', ui.ButtonSet.YES_NO) !== ui.Button.YES) return;
+  runBatch(members);
 }
 
-// Called when user manually uploads an xlsx file (fallback path — no member merge)
-function parseHorseXLSX(wb){
+// ===== HORSE LICENSE MENU ACTION =====
+
+function sendQueuedLicenses() {
+  var memberIndex = buildMemberIndex();
+  var horses = getHorseLicenses(memberIndex).filter(function(h){ return h.sentStatus === 'send' && h.riderEmail; });
+  if (!horses.length) {
+    SpreadsheetApp.getUi().alert('No horse licenses are marked "send" with a matching rider email address.');
+    return;
+  }
+  var ui = SpreadsheetApp.getUi();
+  if (ui.alert('Send Licenses', 'Send horse licenses to ' + horses.length + ' entries marked "send"?', ui.ButtonSet.YES_NO) !== ui.Button.YES) return;
+  runLicenseBatch(horses);
+}
+
+function checkQuota() {
+  SpreadsheetApp.getUi().alert('Remaining email quota today: ' + MailApp.getRemainingDailyQuota());
+}
+
+// ===== MEMBERSHIP BATCH =====
+
+function runBatch(members) {
+  var sent = 0, failed = 0, errors = [];
+  for (var i = 0; i < members.length; i++) {
+    try {
+      var pdf = generateCardPDF(members[i]);
+      sendEmail(members[i], pdf);
+      logSent(members[i]);
+      sent++;
+      Utilities.sleep(300);
+    } catch(err) {
+      failed++;
+      errors.push(members[i].fullName + ': ' + err.message);
+    }
+  }
+  var msg = 'Done!\n\nSent: ' + sent + '\nFailed: ' + failed;
+  if (errors.length) msg += '\n\nErrors:\n' + errors.join('\n');
+  SpreadsheetApp.getUi().alert(msg);
+}
+
+// ===== HORSE LICENSE BATCH =====
+
+function runLicenseBatch(horses) {
+  var sent = 0, failed = 0, errors = [];
+  for (var i = 0; i < horses.length; i++) {
+    try {
+      var pdf = generateLicensePDF(horses[i]);
+      sendLicenseEmail(horses[i], pdf);
+      logLicenseSent(horses[i]);
+      sent++;
+      Utilities.sleep(300);
+    } catch(err) {
+      failed++;
+      errors.push(horses[i].horse + ' (' + horses[i].owner + '): ' + err.message);
+    }
+  }
+  var msg = 'Done!\n\nSent: ' + sent + '\nFailed: ' + failed;
+  if (errors.length) msg += '\n\nErrors:\n' + errors.join('\n');
+  SpreadsheetApp.getUi().alert(msg);
+}
+
+// ===== MEMBERSHIP PDF =====
+
+function generateCardPDF(member) {
+  var html = buildCardHTML(member);
+  var blob = Utilities.newBlob(html, 'text/html', 'card.html');
+  var file = DriveApp.createFile(blob);
+  var pdf = file.getAs('application/pdf');
+  pdf.setName(member.first + '_' + member.last + '_CoWN_Card.pdf');
+  file.setTrashed(true);
+  return pdf;
+}
+
+function buildCardHTML(member) {
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>'
+    + '*{margin:0;padding:0;box-sizing:border-box}'
+    + 'body{font-family:Arial,sans-serif;background:#fff;color:#222;padding:32px}'
+    + '.card{width:480px;background:#0f1923;border-radius:14px;padding:22px 26px;'
+    + '-webkit-print-color-adjust:exact;print-color-adjust:exact;margin:0 auto}'
+    + '.card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px}'
+    + '.cown{font-size:30px;font-weight:900;color:#D4A04A;letter-spacing:.08em}'
+    + '.card-label{text-align:right}'
+    + '.card-label-top{font-size:9px;color:rgba(255,255,255,.5);letter-spacing:.12em}'
+    + '.card-type{font-size:14px;font-weight:700;color:#D4A04A;letter-spacing:.04em;margin-top:3px}'
+    + '.member-name{font-size:26px;font-weight:700;color:#fff;margin-bottom:14px;letter-spacing:.01em}'
+    + '.card-details{display:flex;gap:36px}'
+    + '.detail-label{font-size:9px;color:rgba(255,255,255,.45);letter-spacing:.1em;margin-bottom:3px}'
+    + '.detail-value{font-size:16px;font-weight:700;color:#D4A04A}'
+    + '.divider{border:none;border-top:1px solid #ddd;margin:28px 0}'
+    + '.letter{max-width:480px;margin:0 auto;font-size:13.5px;line-height:1.75;color:#333}'
+    + '.letter p{margin-bottom:12px}'
+    + '.letter ul{margin:4px 0 14px 18px}'
+    + '.letter li{margin-bottom:3px}'
+    + '.letter a{color:#D4A04A;text-decoration:none}'
+    + '.footer{margin-top:24px;font-size:11px;color:#aaa;border-top:1px solid #eee;padding-top:14px}'
+    + '</style></head><body>'
+    + '<div class="card">'
+    + '<div class="card-top">'
+    + '<div class="cown">CoWN</div>'
+    + '<div class="card-label"><div class="card-label-top">MEMBERSHIP CARD</div><div class="card-type">' + member.type.toUpperCase() + '</div></div>'
+    + '</div>'
+    + '<div class="member-name">' + member.fullName + '</div>'
+    + '<div class="card-details">'
+    + '<div><div class="detail-label">COWN #</div><div class="detail-value">' + member.cownNum + '</div></div>'
+    + '<div><div class="detail-label">EXPIRES</div><div class="detail-value">' + member.expDate + '</div></div>'
+    + '</div>'
+    + '</div>'
+    + '<hr class="divider">'
+    + '<div class="letter">'
+    + '<p><strong>Hi ' + member.first + ',</strong></p>'
+    + '<p>Welcome to the <strong>Colorado, Wyoming & Nebraska Stock Horse Association — CoWN!</strong> We\'re thrilled to have you as a member.</p>'
+    + '<p><strong>Your membership includes:</strong></p>'
+    + '<ul>'
+    + '<li>CoWN & SHTx Membership</li>'
+    + '<li>Access to all clinics and events throughout the year</li>'
+    + '<li>Records maintained for all CoWN-approved events</li>'
+    + '<li>CoWN newsletters and e-blasts</li>'
+    + '</ul>'
+    + '<p>Check your info, division eligibility, or renew at <a href="https://www.cownsh.com">www.cownsh.com</a>.</p>'
+    + '<p>See you at the shows!</p>'
+    + '<div class="footer">Colorado, Wyoming & Nebraska Stock Horse Association &nbsp;|&nbsp; www.cownsh.com</div>'
+    + '</div>'
+    + '</body></html>';
+}
+
+// ===== HORSE LICENSE PDF =====
+
+function generateLicensePDF(horse) {
+  var html = buildLicenseHTML(horse);
+  var blob = Utilities.newBlob(html, 'text/html', 'license.html');
+  var file = DriveApp.createFile(blob);
+  var pdf = file.getAs('application/pdf');
+  pdf.setName(horse.horse.replace(/\s+/g,'_') + '_CoWN_License.pdf');
+  file.setTrashed(true);
+  return pdf;
+}
+
+function buildLicenseHTML(horse) {
+  // Owner row — name + CoWN member number (looked up from membership sheet)
+  var ownerDisplay = horse.owner + (horse.ownerCownNum ? '&nbsp;&nbsp;<span style="color:#999;font-size:13px">CoWN #' + horse.ownerCownNum + '</span>' : '');
+  // Rider row — only if different from owner
+  var riderDisplay = '';
+  if (horse.rider && horse.rider.toLowerCase() !== horse.owner.toLowerCase()) {
+    riderDisplay = horse.rider + (horse.riderCownNum ? '&nbsp;&nbsp;<span style="color:#999;font-size:13px">CoWN #' + horse.riderCownNum + '</span>' : '');
+  }
+  var riderLine = riderDisplay ? '<tr><td class="lbl">RIDER</td><td class="val">' + riderDisplay + '</td></tr>' : '';
+  var horseNumLine = horse.horseNum ? '<tr><td class="lbl">HORSE #</td><td class="val">' + horse.horseNum + '</td></tr>' : '';
+  var licLine = horse.licNum ? '<tr><td class="lbl">LICENSE #</td><td class="val" style="font-family:monospace">' + horse.licNum + '</td></tr>' : '';
+
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>'
+    + '*{margin:0;padding:0;box-sizing:border-box}'
+    + 'body{font-family:Arial,sans-serif;background:#fff;color:#222;padding:32px}'
+    + '.card{width:480px;border:2px solid #D4A04A;border-radius:12px;padding:22px 26px;margin:0 auto;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    + '.card-top{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #D4A04A;padding-bottom:14px;margin-bottom:16px}'
+    + '.cown{font-size:28px;font-weight:900;color:#1a1a2e;letter-spacing:.08em}'
+    + '.card-title-main{font-size:13px;font-weight:700;color:#1a1a2e;letter-spacing:.06em;text-align:right}'
+    + '.card-title-sub{font-size:9px;color:#aaa;margin-top:2px;text-align:right}'
+    + 'table{width:100%;border-collapse:collapse;margin-bottom:12px}'
+    + 'td{padding:5px 4px;vertical-align:top}'
+    + '.lbl{font-size:8px;color:#999;letter-spacing:.1em;text-transform:uppercase;width:90px;padding-top:8px}'
+    + '.val{font-size:15px;font-weight:700;color:#1a1a2e}'
+    + '.horse-name{font-size:22px;font-weight:900;color:#1a1a2e;margin-bottom:16px}'
+    + '.year-badge{display:inline-block;background:#D4A04A;color:#fff;font-size:13px;font-weight:700;padding:3px 14px;border-radius:20px;margin-left:12px;vertical-align:middle}'
+    + '.footer{border-top:1px solid #e8e0d0;padding-top:10px;font-size:10px;color:#aaa;display:flex;justify-content:space-between}'
+    + '.divider{border:none;border-top:1px solid #ddd;margin:20px 0}'
+    + '.letter{max-width:480px;margin:0 auto;font-size:13px;line-height:1.75;color:#333}'
+    + '.letter p{margin-bottom:10px}'
+    + '.letter a{color:#D4A04A}'
+    + '</style></head><body>'
+    + '<div class="card">'
+    + '<div class="card-top">'
+    + '<div class="cown">CoWN</div>'
+    + '<div><div class="card-title-main">HORSE LICENSE</div><div class="card-title-sub">Stock Horse Association</div></div>'
+    + '</div>'
+    + '<div class="horse-name">' + horse.horse + '<span class="year-badge">' + horse.year + '</span></div>'
+    + '<table>'
+    + '<tr><td class="lbl">OWNER</td><td class="val">' + ownerDisplay + '</td></tr>'
+    + riderLine
+    + horseNumLine
+    + licLine
+    + '</table>'
+    + '<div class="footer"><span>Colorado, Wyoming &amp; Nebraska Stock Horse Association</span><span>www.cownsh.com</span></div>'
+    + '</div>'
+    + '<hr class="divider">'
+    + '<div class="letter">'
+    + '<p><strong>Hi ' + horse.owner + ',</strong></p>'
+    + '<p>Your CoWN horse license for <strong>' + horse.horse + '</strong> (' + horse.year + ') is attached as a PDF. Keep it handy for show check-in!</p>'
+    + (riderDisplay ? '<p>Rider on file: <strong>' + horse.rider + '</strong></p>' : '')
+    + '<p>Questions? Visit <a href="https://www.cownsh.com">www.cownsh.com</a> or reply to this email.</p>'
+    + '<p>See you at the shows!</p>'
+    + '</div>'
+    + '</body></html>';
+}
+
+// ===== MEMBERSHIP EMAIL =====
+
+function sendEmail(member, pdfBlob) {
+  var subject = 'Your CoWN Membership Card — ' + member.fullName;
+  var html = '<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto">'
+    + '<div style="background:#0f1923;border-radius:10px 10px 0 0;padding:20px 26px">'
+    + '<div style="font-size:28px;font-weight:900;color:#D4A04A;letter-spacing:.08em">CoWN</div>'
+    + '<div style="font-size:9px;color:rgba(255,255,255,.45);letter-spacing:.12em;margin-top:3px">COLORADO · WYOMING · NEBRASKA STOCK HORSE</div>'
+    + '</div>'
+    + '<div style="border:1px solid #ddd;border-top:none;border-radius:0 0 10px 10px;padding:26px">'
+    + '<p style="margin:0 0 12px"><strong>Hi ' + member.first + ',</strong></p>'
+    + '<p style="margin:0 0 20px;color:#444;line-height:1.6">Your CoWN membership card is attached as a PDF. Save it to your phone or print it out!</p>'
+    + '<div style="background:#0f1923;border-radius:10px;border:2px solid #D4A04A;padding:20px 24px;margin-bottom:24px">'
+    + '<div style="font-size:9px;letter-spacing:.12em;color:rgba(255,255,255,.45);margin-bottom:10px">MEMBERSHIP CARD</div>'
+    + '<div style="font-size:22px;font-weight:700;color:#fff;margin-bottom:14px">' + member.fullName + '</div>'
+    + '<table style="border-collapse:collapse"><tr>'
+    + '<td style="padding-right:32px"><div style="font-size:9px;color:rgba(255,255,255,.45);letter-spacing:.1em;margin-bottom:3px">COWN #</div><div style="font-size:17px;font-weight:700;color:#D4A04A">' + member.cownNum + '</div></td>'
+    + '<td style="padding-right:32px"><div style="font-size:9px;color:rgba(255,255,255,.45);letter-spacing:.1em;margin-bottom:3px">TYPE</div><div style="font-size:17px;font-weight:700;color:#D4A04A">' + member.type + '</div></td>'
+    + '<td><div style="font-size:9px;color:rgba(255,255,255,.45);letter-spacing:.1em;margin-bottom:3px">EXPIRES</div><div style="font-size:17px;font-weight:700;color:#D4A04A">' + member.expDate + '</div></td>'
+    + '</tr></table>'
+    + '</div>'
+    + '<p style="margin:0 0 8px;color:#222"><strong>Your membership includes:</strong></p>'
+    + '<ul style="margin:0 0 20px;padding-left:18px;color:#444;line-height:1.8">'
+    + '<li>CoWN &amp; SHTx Membership</li>'
+    + '<li>Access to all clinics and events</li>'
+    + '<li>Records maintained for CoWN-approved events</li>'
+    + '<li>CoWN newsletters and e-blasts</li>'
+    + '</ul>'
+    + '<p style="margin:0 0 24px;color:#444">Check your info or renew at <a href="https://www.cownsh.com" style="color:#D4A04A;font-weight:bold">www.cownsh.com</a></p>'
+    + '<div style="border-top:1px solid #eee;padding-top:14px;font-size:11px;color:#aaa">Colorado, Wyoming &amp; Nebraska Stock Horse Association &nbsp;|&nbsp; www.cownsh.com</div>'
+    + '</div></div>';
+
+  MailApp.sendEmail(member.email, subject,
+    'Your CoWN membership card is attached. Thank you for being a member!',
+    { htmlBody: html, attachments: [pdfBlob], name: SENDER_NAME, replyTo: REPLY_TO });
+}
+
+// ===== HORSE LICENSE EMAIL =====
+
+function sendLicenseEmail(horse, pdfBlob) {
+  var subject = 'Your CoWN Horse License — ' + horse.horse + ' (' + horse.year + ')';
+
+  var riderLine = '';
+  if (horse.rider && horse.rider.toLowerCase() !== horse.owner.toLowerCase()) {
+    riderLine = '<tr><td colspan="2" style="padding-top:10px">'
+      + '<div style="font-size:9px;color:#999;letter-spacing:.1em;margin-bottom:3px">RIDER</div>'
+      + '<div style="font-size:15px;font-weight:700;color:#1a1a2e">' + horse.rider
+      + (horse.riderCownNum ? ' <span style="font-size:12px;font-weight:400;color:#999">CoWN #' + horse.riderCownNum + '</span>' : '')
+      + '</div></td></tr>';
+  }
+
+  var html = '<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto">'
+    + '<div style="background:#1a1a2e;border-radius:10px 10px 0 0;padding:20px 26px">'
+    + '<div style="font-size:28px;font-weight:900;color:#D4A04A;letter-spacing:.08em">CoWN</div>'
+    + '<div style="font-size:9px;color:rgba(255,255,255,.45);letter-spacing:.12em;margin-top:3px">COLORADO · WYOMING · NEBRASKA STOCK HORSE</div>'
+    + '</div>'
+    + '<div style="border:1px solid #ddd;border-top:none;border-radius:0 0 10px 10px;padding:26px">'
+    + '<p style="margin:0 0 12px"><strong>Hi ' + horse.owner + ',</strong></p>'
+    + '<p style="margin:0 0 20px;color:#444;line-height:1.6">Your CoWN horse license is attached as a PDF. Keep it handy for show check-in!</p>'
+    + '<div style="border:2px solid #D4A04A;border-radius:10px;padding:20px 24px;margin-bottom:24px">'
+    + '<div style="font-size:9px;letter-spacing:.12em;color:#999;margin-bottom:6px">HORSE LICENSE</div>'
+    + '<div style="font-size:22px;font-weight:900;color:#1a1a2e;margin-bottom:4px">' + horse.horse + '</div>'
+    + '<div style="display:inline-block;background:#D4A04A;color:#fff;font-size:12px;font-weight:700;padding:2px 12px;border-radius:20px;margin-bottom:14px">' + horse.year + '</div>'
+    + '<table style="border-collapse:collapse;width:100%">'
+    + '<tr>'
+    + '<td style="padding-right:28px;padding-bottom:6px">'
+    + '<div style="font-size:9px;color:#999;letter-spacing:.1em;margin-bottom:3px">OWNER</div>'
+    + '<div style="font-size:15px;font-weight:700;color:#1a1a2e">' + horse.owner
+    + (horse.ownerCownNum ? ' <span style="font-size:12px;font-weight:400;color:#999">CoWN #' + horse.ownerCownNum + '</span>' : '')
+    + '</div></td>'
+    + (horse.horseNum ? '<td><div style="font-size:9px;color:#999;letter-spacing:.1em;margin-bottom:3px">HORSE #</div><div style="font-size:15px;font-weight:700;color:#1a1a2e">' + horse.horseNum + '</div></td>' : '<td></td>')
+    + '</tr>'
+    + riderLine
+    + '</table>'
+    + '</div>'
+    + '<p style="margin:0 0 24px;color:#444">Questions? Visit <a href="https://www.cownsh.com" style="color:#D4A04A;font-weight:bold">www.cownsh.com</a> or reply to this email.</p>'
+    + '<div style="border-top:1px solid #eee;padding-top:14px;font-size:11px;color:#aaa">Colorado, Wyoming &amp; Nebraska Stock Horse Association &nbsp;|&nbsp; www.cownsh.com</div>'
+    + '</div></div>';
+
+  MailApp.sendEmail(horse.riderEmail, subject,
+    'Your CoWN horse license for ' + horse.horse + ' (' + horse.year + ') is attached.',
+    { htmlBody: html, attachments: [pdfBlob], name: SENDER_NAME, replyTo: REPLY_TO });
+}
+
+// ===== WEB APP (doGet) =====
+
+function doGet(e) {
+  var params = e.parameter || {};
+
+  // type=membership → return raw spreadsheet bytes as base64
+  if (params.type === 'membership') {
+    var file = DriveApp.getFileById(SHEET_ID);
+    var bytes = file.getBlob().getBytes();
+    return ContentService
+      .createTextOutput(Utilities.base64Encode(bytes))
+      .setMimeType(ContentService.MimeType.TEXT);
+  }
+
+  // type=horse → return merged JSON
+  if (params.type === 'horse') {
+    var memberIndex = buildMemberIndex();
+    var horses = getHorseLicenses(memberIndex);
+    return ContentService
+      .createTextOutput(JSON.stringify({ horses: horses, memberCount: Object.keys(memberIndex).length }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // ── Action requests (send emails) ──
+  var action = params.action || '';
+  var result = {};
+  try {
+    if (action === 'send') {
+      result = sendSingleCard(parseInt(params.cownNum));
+    } else if (action === 'sendBatch') {
+      var nums = (params.nums || '').split(',').map(function(n){ return parseInt(n.trim()); }).filter(function(n){ return n > 0; });
+      result = sendBatchByNums(nums);
+    } else if (action === 'sendLicense') {
+      result = sendSingleLicense(parseInt(params.rowIdx));
+    } else if (action === 'status') {
+      result = getStatus();
+    } else {
+      result = { error: 'Unknown action' };
+    }
+  } catch(err) { result = { error: err.message }; }
+
+  return ContentService
+    .createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ===== MEMBERSHIP SEND (web app) =====
+
+function sendSingleCard(cownNum) {
+  var member = findMember(cownNum);
+  if (!member) return { success: false, error: 'Member not found' };
+  if (!member.email) return { success: false, error: 'No email address' };
+  if (member.sentStatus === 'renew') return { success: false, error: 'Member marked as renew — not sending' };
+  if (member.sentStatus === 'sent') return { success: false, error: 'Already sent on ' + member.sentRaw };
+  var pdf = generateCardPDF(member);
+  sendEmail(member, pdf);
+  logSent(member);
+  return { success: true, member: member.fullName, email: member.email };
+}
+
+function sendBatchByNums(nums) {
+  var sent = 0, failed = 0, skipped = 0;
+  for (var i = 0; i < nums.length; i++) {
+    try {
+      var member = findMember(nums[i]);
+      if (!member || !member.email) { failed++; continue; }
+      if (member.sentStatus === 'renew' || member.sentStatus === 'sent') { skipped++; continue; }
+      var pdf = generateCardPDF(member);
+      sendEmail(member, pdf);
+      logSent(member);
+      sent++;
+      Utilities.sleep(300);
+    } catch(err) { failed++; }
+  }
+  return { sent: sent, failed: failed, skipped: skipped, total: nums.length };
+}
+
+// ===== HORSE LICENSE SEND (web app) =====
+
+function sendSingleLicense(rowIdx) {
+  var memberIndex = buildMemberIndex();
+  var horses = getHorseLicenses(memberIndex);
+  var horse = null;
+  for (var i = 0; i < horses.length; i++) {
+    if (horses[i].rowIndex === rowIdx) { horse = horses[i]; break; }
+  }
+  if (!horse) return { success: false, error: 'License not found at row ' + rowIdx };
+  if (!horse.riderEmail) return { success: false, error: 'No email found for rider "' + horse.rider + '" — check that the name exactly matches the membership sheet' };
+  if (horse.sentStatus === 'sent') return { success: false, error: 'Already sent' };
+  var pdf = generateLicensePDF(horse);
+  sendLicenseEmail(horse, pdf);
+  logLicenseSent(horse);
+  return { success: true, horse: horse.horse, owner: horse.owner, email: horse.riderEmail };
+}
+
+function getStatus() {
+  var all = getActiveMembers();
+  return {
+    active: all.length,
+    queued: all.filter(function(m){ return m.sentStatus === 'send'; }).length,
+    sent: all.filter(function(m){ return m.sentStatus === 'sent'; }).length,
+    renew: all.filter(function(m){ return m.sentStatus === 'renew'; }).length,
+    blank: all.filter(function(m){ return m.sentStatus === ''; }).length,
+    quota: MailApp.getRemainingDailyQuota()
+  };
+}
+
+// ===== MEMBERSHIP DATA =====
+
+function getActiveMembers() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = ss.getSheetByName(MEMBERSHIP_SHEET_NAME);
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0].map(function(h){ return String(h).toLowerCase().trim(); });
+  var firstCol  = headers.indexOf('first');
+  var lastCol   = headers.indexOf('last');
+  var numCol    = headers.indexOf('cown #');
+  var typeCol   = headers.indexOf('type');
+  var statusCol = headers.indexOf('status');
+  var expCol    = headers.indexOf('expiration date');
+  var emailCol  = headers.indexOf('recipient') >= 0 ? headers.indexOf('recipient') : headers.indexOf('email');
+  var sentCol   = headers.indexOf('sent');
+  var members = [];
+  for (var i = 1; i < data.length; i++) {
+    var first = String(data[i][firstCol] || '').trim();
+    var last  = String(data[i][lastCol]  || '').trim();
+    if (!first && !last) continue;
+    if (String(data[i][statusCol] || '').trim() !== 'Active') continue;
+    var expDate = data[i][expCol], expStr = '';
+    if (expDate instanceof Date) expStr = (expDate.getMonth()+1)+'/'+expDate.getDate()+'/'+expDate.getFullYear();
+    else if (expDate) expStr = String(expDate).split('T')[0];
+    var rawSent = sentCol >= 0 ? String(data[i][sentCol] || '').trim() : '';
+    members.push({
+      first: first, last: last, fullName: first+' '+last,
+      cownNum: parseInt(data[i][numCol]) || 0,
+      type: String(data[i][typeCol] || 'General').trim(),
+      expDate: expStr,
+      email: String(data[i][emailCol] || '').trim(),
+      sentStatus: parseSentStatus(rawSent),
+      sentRaw: rawSent,
+      row: i + 1
+    });
+  }
+  return members;
+}
+
+function findMember(cownNum) {
+  var all = getActiveMembers();
+  for (var i = 0; i < all.length; i++) { if (all[i].cownNum === cownNum) return all[i]; }
+  return null;
+}
+
+function logSent(member) {
+  try {
+    var ss = SpreadsheetApp.openById(SHEET_ID);
+    var sheet = ss.getSheetByName(MEMBERSHIP_SHEET_NAME);
+    var headers = sheet.getRange(1, 1, 1, sheet.getMaxColumns()).getValues()[0];
+    var sentCol = -1;
+    for (var i = 0; i < headers.length; i++) {
+      if (String(headers[i]).toLowerCase().trim() === 'sent') { sentCol = i; break; }
+    }
+    if (sentCol >= 0 && member.row) {
+      var now = new Date();
+      sheet.getRange(member.row, sentCol+1).setValue('sent '+(now.getMonth()+1)+'/'+now.getDate()+'/'+now.getFullYear());
+    }
+  } catch(e) { console.log('Log error:', e); }
+}
+
+// ===== MEMBER INDEX =====
+// Builds a name → { cownNum, email } lookup table from the membership sheet.
+// Both "First Last" and "Last First" are indexed to handle name order variations.
+// NOTE: All members are indexed (not just Active) so horse licenses for lapsed
+// members still resolve. Change the filter below if you want Active-only matching.
+
+function buildMemberIndex() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = ss.getSheetByName(MEMBERSHIP_SHEET_NAME);
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0].map(function(h){ return String(h).toLowerCase().trim(); });
+
+  var firstCol = headers.indexOf('first');
+  var lastCol  = headers.indexOf('last');
+  var numCol   = headers.indexOf('cown #');
+  var emailCol = headers.indexOf('recipient') >= 0 ? headers.indexOf('recipient') : headers.indexOf('email');
+
+  var index = {};
+  for (var i = 1; i < data.length; i++) {
+    var first = String(data[i][firstCol] || '').trim();
+    var last  = String(data[i][lastCol]  || '').trim();
+    if (!first && !last) continue;
+    var cownNum = parseInt(data[i][numCol]) || 0;
+    var email   = emailCol >= 0 ? String(data[i][emailCol] || '').trim() : '';
+    var entry   = { cownNum: cownNum, email: email };
+
+    // Index by "First Last"
+    var key1 = (first + ' ' + last).trim().toLowerCase();
+    index[key1] = entry;
+
+    // Also index by "Last First" in case horse sheet has names in that order
+    var key2 = (last + ' ' + first).trim().toLowerCase();
+    if (key2 !== key1) index[key2] = entry;
+  }
+  return index;
+}
+
+function lookupMember(name, index) {
+  if (!name) return null;
+  return index[name.trim().toLowerCase()] || null;
+}
+
+// ===== HORSE LICENSE DATA =====
+
+function getHorseLicenses(memberIndex) {
+  var ss = SpreadsheetApp.openById(HORSE_SHEET_ID);
+  var sheet = ss.getSheetByName(HORSE_SHEET_NAME);
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0].map(function(h){ return String(h).toLowerCase().trim(); });
+
+  function col(names) {
+    for (var n = 0; n < names.length; n++) {
+      var idx = headers.indexOf(names[n]);
+      if (idx >= 0) return idx;
+    }
+    return -1;
+  }
+
+  var horseCol    = col(['horse', 'horse name']);
+  var ownerCol    = col(['owner', 'owner name']);
+  var horseNumCol = col(['cown horse number', 'cown horse #', 'horse number', 'horse #']);
+  var riderCol    = col(['rider', 'rider name']);
+  var yearCol     = col(['year', 'license year', 'yr']);
+  var licCol      = col(['license #', 'license number', 'lic #']);
+  var sentCol     = col(['sent']); // optional — ok if not present
+
   var horses = [];
-  var shName = wb.SheetNames.find(function(n){
-    return n.toLowerCase().indexOf("horse") > -1 || n.toLowerCase().indexOf("license") > -1;
-  }) || wb.SheetNames[0];
+  for (var i = 1; i < data.length; i++) {
+    var horse    = horseCol  >= 0 ? String(data[i][horseCol]  || '').trim() : '';
+    var owner    = ownerCol  >= 0 ? String(data[i][ownerCol]  || '').trim() : '';
+    if (!horse && !owner) continue;
 
-  var raw = XLSX.utils.sheet_to_json(wb.Sheets[shName], { defval: null });
-  if(raw.length > 0) console.log("Horse sheet columns:", Object.keys(raw[0]));
+    var horseNum = horseNumCol >= 0 ? String(data[i][horseNumCol] || '').trim() : '';
+    var rider    = riderCol    >= 0 ? String(data[i][riderCol]    || '').trim() : '';
+    var year     = yearCol     >= 0 ? (parseInt(data[i][yearCol]) || new Date().getFullYear()) : new Date().getFullYear();
+    var licNum   = licCol      >= 0 ? String(data[i][licCol]      || '').trim() : '';
+    var rawSent  = sentCol     >= 0 ? String(data[i][sentCol]     || '').trim() : '';
 
-  for(var i = 0; i < raw.length; i++){
-    var row = raw[i];
-    var lk = {};
-    Object.keys(row).forEach(function(k){ lk[k.toLowerCase().trim()] = row[k]; });
+    // ── Merge from membership sheet by name ──
+    var ownerMatch = lookupMember(owner, memberIndex);
+    // If rider is blank or same as owner, fall back to owner's match for rider CoWN #
+    var riderIsOwner = !rider || rider.toLowerCase() === owner.toLowerCase();
+    var riderMatch   = riderIsOwner ? ownerMatch : lookupMember(rider, memberIndex);
 
-    var horse = String(lk["horse"] || lk["horse name"] || "").trim();
-    var owner = String(lk["owner"] || lk["owner name"] || "").trim();
-    if(!horse && !owner) continue;
-
-    var rawSent = String(lk["sent"] || "").trim();
     horses.push({
       horse:        horse,
+      horseNum:     horseNum,
       owner:        owner,
-      horseNum:     String(lk["cown horse number"] || lk["cown horse #"] || lk["horse number"] || lk["horse #"] || "").trim(),
-      ownerCownNum: "",
-      ownerEmail:   String(lk["email"] || lk["recipient"] || "").trim(),
-      rider:        String(lk["rider"] || lk["rider name"] || "").trim(),
-      riderCownNum: "",
-      riderEmail:   "",
-      year:         parseInt(lk["year"] || lk["license year"] || lk["yr"] || 0) || currentYear(),
-      licNum:       String(lk["license #"] || lk["license number"] || lk["lic #"] || "").trim(),
+      ownerCownNum: ownerMatch ? ownerMatch.cownNum : '',
+      ownerEmail:   ownerMatch ? ownerMatch.email   : '',
+      rider:        riderIsOwner ? '' : rider,
+      riderCownNum: riderMatch  ? riderMatch.cownNum : '',
+      riderEmail:   riderMatch  ? riderMatch.email   : (ownerMatch ? ownerMatch.email : ''), // fall back to owner if rider is same or blank
+      year:         year,
+      licNum:       licNum,
       sentStatus:   parseSentStatus(rawSent),
       sentRaw:      rawSent,
       rowIndex:     i,
-      ownerFound:   true,
-      riderFound:   true
+      // Warning flags so the Hub can highlight unmatched rows
+      ownerFound:   !!ownerMatch,
+      riderFound:   riderIsOwner || !!riderMatch
     });
   }
-  console.log("Parsed " + horses.length + " horse licenses from file (no member merge)");
-  return horses.sort(function(a,b){ return a.owner.localeCompare(b.owner) || a.horse.localeCompare(b.horse); });
+  return horses;
 }
 
-// ===== TABS & VIEWS =====
-function renderTabs(){
-  var tabs = [{ id:"lookup", l:"Horse Lookup" }];
-  if(S.adminUnlocked) tabs.push({ id:"dashboard", l:"Dashboard" }, { id:"licenses", l:"Licenses" }, { id:"setup", l:"Setup Guide" }, { id:"settings", l:"Settings" });
-  var h = tabs.map(function(t){
-    return "<button class='tab"+(S.view===t.id?" active":"")+"' data-view='"+t.id+"'>"+t.l+"</button>";
-  }).join("");
-  if(!S.adminUnlocked) h += "<button class='tab' id='admin-unlock-btn' style='margin-left:auto;color:var(--muted)'>Admin</button>";
-  document.getElementById("tabs").innerHTML = h;
-  document.querySelectorAll(".tab").forEach(function(b){
-    if(b.dataset.view) b.addEventListener("click", function(){ showView(b.dataset.view); });
-  });
-  var u = document.getElementById("admin-unlock-btn");
-  if(u) u.addEventListener("click", function(){
-    S.pendingView = "dashboard";
-    document.getElementById("pwd-gate").classList.remove("hidden");
-    document.getElementById("pwd-input").focus();
-  });
-}
-
-function showView(v){
-  var needsPwd = ["dashboard","licenses","setup","settings"];
-  if(needsPwd.indexOf(v) > -1 && !S.adminUnlocked){
-    S.pendingView = v;
-    document.getElementById("pwd-gate").classList.remove("hidden");
-    document.getElementById("pwd-input").focus();
-    return;
-  }
-  S.view = v;
-  ["loading","lookup","dashboard","licenses","setup","settings"].forEach(function(id){
-    document.getElementById(id+"-view").classList.toggle("hidden", id !== v);
-  });
-  renderTabs();
-  if(v === "lookup")    renderLookup();
-  if(v === "dashboard") renderDashboard();
-  if(v === "licenses")  renderLicenses();
-  if(v === "setup")     renderSetup();
-  if(v === "settings")  renderSettings();
-}
-
-// Password gate
-document.getElementById("pwd-btn").addEventListener("click", function(){
-  if(document.getElementById("pwd-input").value === CONFIG.password){
-    S.adminUnlocked = true;
-    document.getElementById("pwd-gate").classList.add("hidden");
-    document.getElementById("pwd-input").value = "";
-    showView(S.pendingView || "dashboard");
-  } else { alert("Wrong password"); }
-});
-document.getElementById("pwd-cancel").addEventListener("click", function(){
-  document.getElementById("pwd-gate").classList.add("hidden");
-  document.getElementById("pwd-input").value = "";
-});
-document.getElementById("pwd-input").addEventListener("keydown", function(e){ if(e.key === "Enter") document.getElementById("pwd-btn").click(); });
-
-// ===== LOOKUP =====
-function renderLookup(){
-  var el = document.getElementById("lookup-view");
-  el.innerHTML = "<div class='card'><div class='card-hdr'><h2>Horse License Lookup</h2><p>Search by horse name, owner, rider, or CoWN number</p></div>"
-    +"<div class='search-wrap'><span class='search-icon'>&#128269;</span><input class='search-box' id='lookup-q' placeholder='Enter horse, owner, rider, or year...'></div>"
-    +"<div id='lookup-results'></div></div>";
-
-  document.getElementById("lookup-q").addEventListener("input", function(){
-    var q = this.value.trim().toLowerCase();
-    var res = document.getElementById("lookup-results");
-    if(q.length < 2){ res.innerHTML = ""; return; }
-    var matches = S.horses.filter(function(h){
-      return h.horse.toLowerCase().indexOf(q) > -1
-          || h.owner.toLowerCase().indexOf(q) > -1
-          || h.rider.toLowerCase().indexOf(q) > -1
-          || h.cownNum.toLowerCase().indexOf(q) > -1;
-    });
-    if(!matches.length){ res.innerHTML = "<p class='empty'>No licenses found</p>"; return; }
-    var t = "<table><thead><tr><th>Horse</th><th>Owner</th><th>Owner CoWN #</th><th>Rider</th><th>Year</th><th></th></tr></thead><tbody>";
-    matches.slice(0, 25).forEach(function(h){
-      t += "<tr><td class='bold'>"+esc(h.horse)+"</td><td>"+esc(h.owner)+ownerBadge(h)+"</td>"
-         +"<td class='ctr'>"+esc(h.ownerCownNum||"—")+"</td><td>"+esc(h.rider)+"</td>"
-         +"<td class='ctr'><span class='badge badge-year'>"+h.year+"</span></td>"
-         +"<td><button class='btn btn-accent btn-sm view-lic-btn' data-idx='"+h.rowIndex+"'>View License</button></td></tr>";
-    });
-    t += "</tbody></table>";
-    res.innerHTML = t;
-    res.querySelectorAll(".view-lic-btn").forEach(function(b){
-      b.addEventListener("click", function(){
-        var idx = parseInt(this.dataset.idx);
-        var horse = S.horses.find(function(h){ return h.rowIndex === idx; });
-        if(horse) showLicenseModal(horse);
-      });
-    });
-  });
-}
-
-// ===== DASHBOARD =====
-function renderDashboard(){
-  var el = document.getElementById("dashboard-view");
-  var byYear = {};
-  S.horses.forEach(function(h){ byYear[h.year] = (byYear[h.year]||0) + 1; });
-  var years = Object.keys(byYear).sort(function(a,b){ return b - a; });
-
-  var queued = S.horses.filter(function(h){ return h.sentStatus === "send"; });
-  var sent   = S.horses.filter(function(h){ return h.sentStatus === "sent"; });
-
-  var h = "<div class='card'><div class='card-hdr'><h2>Dashboard</h2><p>Overview of all horse licenses</p></div>";
-  h += "<div class='stats'>";
-  h += "<div class='stat total-stat'><div class='num'>"+S.horses.length+"</div><div class='lbl'>Total Licenses</div></div>";
-  h += "<div class='stat gold-stat'><div class='num'>"+currentYear()+"</div><div class='lbl'>Current Year</div></div>";
-  h += "<div class='stat green-stat'><div class='num'>"+queued.length+"</div><div class='lbl'>Queued to Send</div></div>";
-  h += "<div class='stat blue-stat'><div class='num'>"+sent.length+"</div><div class='lbl'>Already Sent</div></div>";
-  h += "</div>";
-
-  // Year breakdown
-  if(years.length > 1){
-    h += "<div style='margin:.75rem 0'><table><thead><tr><th>Year</th><th>Licenses</th></tr></thead><tbody>";
-    years.forEach(function(y){
-      h += "<tr><td><span class='badge badge-year'>"+y+"</span></td><td>"+byYear[y]+"</td></tr>";
-    });
-    h += "</tbody></table></div>";
-  }
-
-  // Full list
-  h += "<div class='search-wrap'><span class='search-icon'>&#128269;</span><input class='search-box' id='dash-q' placeholder='Search all licenses...'></div>";
-  h += "<div id='dash-table'></div></div>";
-  el.innerHTML = h;
-
-  function renderTable(){
-    var q = (document.getElementById("dash-q")||{value:""}).value.trim().toLowerCase();
-    var list = q ? S.horses.filter(function(h){
-      return h.horse.toLowerCase().indexOf(q) > -1 || h.owner.toLowerCase().indexOf(q) > -1
-          || h.rider.toLowerCase().indexOf(q) > -1 || String(h.year).indexOf(q) > -1;
-    }) : S.horses;
-    var t = "<div style='overflow-x:auto'><table><thead><tr><th>Horse</th><th>Owner</th><th>Owner CoWN #</th><th>Rider</th><th>Year</th><th>License Status</th></tr></thead><tbody>";
-    list.slice(0, 100).forEach(function(h){
-      t += "<tr class='dash-row' data-idx='"+h.rowIndex+"' style='cursor:pointer'>"
-         +"<td class='bold'>"+esc(h.horse)+"</td><td>"+esc(h.owner)+ownerBadge(h)+"</td>"
-         +"<td class='ctr'>"+esc(h.ownerCownNum||"—")+"</td><td>"+esc(h.rider)+"</td>"
-         +"<td class='ctr'><span class='badge badge-year'>"+h.year+"</span></td>"
-         +"<td class='ctr'>"+sentBadge(h)+"</td></tr>";
-    });
-    t += "</tbody></table></div>";
-    if(!list.length) t = "<p class='empty'>No licenses match</p>";
-    document.getElementById("dash-table").innerHTML = t;
-    document.querySelectorAll(".dash-row").forEach(function(r){
-      r.addEventListener("click", function(){
-        var idx = parseInt(this.dataset.idx);
-        var horse = S.horses.find(function(h){ return h.rowIndex === idx; });
-        if(horse) showDetailModal(horse);
-      });
-    });
-  }
-
-  renderTable();
-  document.getElementById("dash-q").addEventListener("input", renderTable);
-}
-
-// ===== LICENSES (print/send) =====
-function renderLicenses(){
-  var el = document.getElementById("licenses-view");
-  var queued = S.horses.filter(function(h){ return h.sentStatus === "send"; });
-  var sent   = S.horses.filter(function(h){ return h.sentStatus === "sent"; });
-  var blank  = S.horses.filter(function(h){ return h.sentStatus === ""; });
-
-  var h = "<div class='card'><div class='card-hdr'><h2>Horse Licenses</h2>"
-    +"<p>Print or send horse licenses. Set the <strong>Sent</strong> column to <strong>send</strong> to queue a license.</p></div>";
-
-  h += "<div class='stats' style='margin-bottom:1rem'>";
-  h += "<div class='stat green-stat'><div class='num'>"+queued.length+"</div><div class='lbl'>Queued to Send</div></div>";
-  h += "<div class='stat total-stat'><div class='num'>"+blank.length+"</div><div class='lbl'>No Action</div></div>";
-  h += "<div class='stat blue-stat'><div class='num'>"+sent.length+"</div><div class='lbl'>Already Sent</div></div>";
-  h += "</div>";
-
-  h += "<div class='btn-row' style='margin-bottom:1rem'>";
-  h += "<button class='btn btn-accent' id='batch-print'>&#128424; Print All Licenses</button>";
-  if(queued.length > 0)
-    h += "<button class='btn btn-green' id='batch-send'>&#9993; Send "+queued.length+" Queued</button>";
-  h += "</div>";
-
-  h += "<div class='search-wrap'><span class='search-icon'>&#128269;</span><input class='search-box' id='lic-q' placeholder='Search licenses...'></div>";
-  h += "<div class='pills' style='margin-bottom:.75rem'>";
-  h += "<button class='pill active' data-lf='all'>All <span class='ct'>("+S.horses.length+")</span></button>";
-  h += "<button class='pill' data-lf='send'>Queued <span class='ct'>("+queued.length+")</span></button>";
-  h += "<button class='pill' data-lf='sent'>Sent <span class='ct'>("+sent.length+")</span></button>";
-  h += "<button class='pill' data-lf=''>No Action <span class='ct'>("+blank.length+")</span></button>";
-  h += "</div>";
-  h += "<div id='lic-results'></div></div>";
-  el.innerHTML = h;
-
-  var licFilter = "all";
-
-  function renderLicList(q){
-    var list = S.horses;
-    if(licFilter !== "all") list = S.horses.filter(function(h){ return h.sentStatus === licFilter; });
-    if(q) list = list.filter(function(h){
-      return h.horse.toLowerCase().indexOf(q) > -1 || h.owner.toLowerCase().indexOf(q) > -1 || h.rider.toLowerCase().indexOf(q) > -1;
-    });
-    var res = document.getElementById("lic-results");
-    if(!list.length){ res.innerHTML = "<p class='empty'>No licenses match</p>"; return; }
-    var t = "<div style='overflow-x:auto'><table><thead><tr><th>Horse</th><th>Owner</th><th>Owner CoWN #</th><th>Rider</th><th>Year</th><th>Status</th><th></th></tr></thead><tbody>";
-    list.slice(0, 60).forEach(function(h){
-      t += "<tr><td class='bold'>"+esc(h.horse)+"</td><td>"+esc(h.owner)+ownerBadge(h)+"</td>"
-         +"<td class='ctr'>"+esc(h.ownerCownNum||"—")+"</td><td>"+esc(h.rider)+"</td>"
-         +"<td class='ctr'><span class='badge badge-year'>"+h.year+"</span></td>"
-         +"<td class='ctr'>"+sentBadge(h)+"</td>"
-         +"<td><button class='btn btn-dark btn-sm view-lic-btn' data-idx='"+h.rowIndex+"'>View</button>"
-         +(h.riderEmail ? " <button class='btn btn-green btn-sm send-lic-btn' data-idx='"+h.rowIndex+"'>&#9993; Send</button>"
-                        : " <span style='font-size:.7rem;color:var(--red)'>No email</span>")
-         +"</td></tr>";
-    });
-    t += "</tbody></table></div>";
-    res.innerHTML = t;
-    res.querySelectorAll(".view-lic-btn").forEach(function(b){
-      b.addEventListener("click", function(){
-        var idx = parseInt(this.dataset.idx);
-        var horse = S.horses.find(function(h){ return h.rowIndex === idx; });
-        if(horse) showLicenseModal(horse);
-      });
-    });
-    res.querySelectorAll(".send-lic-btn").forEach(function(b){
-      b.addEventListener("click", function(){ sendLicenseEmail(parseInt(this.dataset.idx), this); });
-    });
-  }
-
-  renderLicList("");
-  document.getElementById("lic-q").addEventListener("input", function(){ renderLicList(this.value.trim().toLowerCase()); });
-  el.querySelectorAll("[data-lf]").forEach(function(b){
-    b.addEventListener("click", function(){
-      licFilter = b.dataset.lf;
-      el.querySelectorAll("[data-lf]").forEach(function(p){ p.classList.remove("active"); });
-      b.classList.add("active");
-      renderLicList((document.getElementById("lic-q")||{value:""}).value.trim().toLowerCase());
-    });
-  });
-
-  document.getElementById("batch-print").addEventListener("click", function(){
-    var win = window.open("", "", "width=600,height=800");
-    win.document.write("<!DOCTYPE html><html><head>"
-      +"<link href='https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Source+Sans+3:wght@400;600&display=swap' rel='stylesheet'>"
-      +"<style>body{font-family:'Source Sans 3',sans-serif;padding:1rem;background:#fff;color:#333}"
-      +"@media print{.license-page{page-break-after:always}.license-card{-webkit-print-color-adjust:exact;print-color-adjust:exact}}"
-      +".license-page{max-width:540px;margin:0 auto 2rem;padding:1.5rem}</style></head><body>");
-    S.horses.forEach(function(h){ win.document.write("<div class='license-page'>"+buildLicenseHTML(h)+"</div>"); });
-    win.document.write("</body></html>");
-    win.document.close();
-    setTimeout(function(){ win.print(); }, 500);
-  });
-
-  var batchBtn = document.getElementById("batch-send");
-  if(batchBtn){
-    batchBtn.addEventListener("click", function(){
-      var q2 = S.horses.filter(function(h){ return h.sentStatus === "send"; });
-      if(!q2.length){ alert("No licenses are queued to send."); return; }
-      if(!confirm("Send horse licenses to "+q2.length+" entries marked 'send'?")) return;
-      var idxs = q2.map(function(h){ return h.rowIndex; });
-      sendBatchLicenses(idxs, this);
-    });
-  }
-}
-
-// ===== SETUP GUIDE =====
-function renderSetup(){
-  var el = document.getElementById("setup-view");
-  var h = "<div class='card'><div class='card-hdr'><h2>Proxy Setup Guide</h2>"
-    +"<p>Follow these steps to connect this tool to your Google Sheet.</p></div>";
-
-  h += "<div class='setup-step'><h4>Step 1 — Prepare your Google Sheet</h4>"
-    +"<p>Make sure your horse license sheet has these column headers (capitalization doesn't matter):</p>"
-    +"<ul><li><code>Horse</code> — horse name</li>"
-    +"<li><code>Owner</code> — owner name</li>"
-    +"<li><code>CoWN Number</code> — member number</li>"
-    +"<li><code>Rider</code> — rider name</li>"
-    +"<li><code>Year</code> — license year (e.g. 2026)</li>"
-    +"<li><code>Sent</code> — leave blank, or type <code>send</code> to queue a license, or <code>sent</code> when done</li>"
-    +"<li>Optional: <code>Email</code>, <code>Phone</code>, <code>Address</code>, <code>City</code>, <code>State</code>, <code>Zip</code>, <code>License #</code></li></ul></div>";
-
-  h += "<div class='setup-step'><h4>Step 2 — Open your existing Google Apps Script proxy</h4>"
-    +"<p>You already have a proxy script set up for the membership hub. Open it in Google Apps Script (script.google.com → your existing project).</p></div>";
-
-  h += "<div class='setup-step'><h4>Step 3 — Add the horse sheet to the proxy</h4>"
-    +"<p>In your existing proxy script, find the section that handles <code>type=membership</code> and add a similar block for <code>type=horse</code>. It should look something like this:</p>"
-    +"<pre style='background:var(--bg);border:1px solid var(--border);padding:.75rem;border-radius:6px;font-size:.75rem;color:var(--accent);overflow-x:auto;margin-top:.5rem'>"
-    +"if (params.type === 'horse') {\n"
-    +"  var file = DriveApp.getFileById('YOUR_HORSE_SHEET_ID');\n"
-    +"  var blob = file.getBlob();\n"
-    +"  return ContentService\n"
-    +"    .createTextOutput(Utilities.base64Encode(blob.getBytes()))\n"
-    +"    .setMimeType(ContentService.MimeType.TEXT);\n"
-    +"}</pre>"
-    +"<p style='margin-top:.5rem'>Replace <code>YOUR_HORSE_SHEET_ID</code> with the ID from your horse license sheet URL:<br>"
-    +"<code>https://docs.google.com/spreadsheets/d/<strong>THIS_PART</strong>/edit</code></p></div>";
-
-  h += "<div class='setup-step'><h4>Step 4 — Redeploy the script</h4>"
-    +"<p>After saving your changes, click <strong>Deploy → Manage Deployments</strong>, then <strong>Edit</strong> the existing deployment and bump the version. This updates the live URL without changing it.</p></div>";
-
-  h += "<div class='setup-step'><h4>Step 5 — Test it</h4>"
-    +"<p>Come back here and click <strong>Settings → Reload from Google Drive</strong>. If the horse licenses load, you're all set!</p>"
-    +"<p style='margin-top:.5rem'>If it doesn't work, you can also use <strong>Settings → Upload File</strong> to manually upload an .xlsx export of your sheet.</p></div>";
-
-  h += "<div class='btn-row'><button class='btn btn-accent' onclick='showView(\"settings\")'>Go to Settings</button></div>";
-  h += "</div>";
-  el.innerHTML = h;
-}
-
-// ===== SETTINGS =====
-function renderSettings(){
-  var el = document.getElementById("settings-view");
-  var h = "<div class='card'><div class='card-hdr'><h2>Settings</h2></div>";
-  h += "<div class='stats'>";
-  h += "<div class='stat total-stat'><div class='num'>"+S.horses.length+"</div><div class='lbl'>Total Licenses</div></div>";
-  h += "<div class='stat gold-stat'><div class='num'>"+S.horses.filter(function(h){ return h.year === currentYear(); }).length+"</div><div class='lbl'>This Year</div></div>";
-  h += "<div class='stat blue-stat'><div class='num'>"+S.horses.filter(function(h){ return !h.email; }).length+"</div><div class='lbl'>No Email</div></div>";
-  h += "</div>";
-  h += "<div class='btn-row'>"
-     +"<button class='btn btn-accent' id='reload-btn'>Reload from Google Drive</button>"
-     +"<label class='btn btn-dark' style='cursor:pointer'>Upload File<input type='file' accept='.xlsx,.xls,.csv' id='file-upload' style='display:none'></label>"
-     +"</div>";
-  h += "<div class='btn-row' style='margin-top:1rem'>"
-     +"<button class='btn btn-dark dl-btn' data-type='all'>Download All</button>"
-     +"<button class='btn btn-dark dl-btn' data-type='year'>Download "+currentYear()+"</button>"
-     +"</div>";
-  h += "<div style='margin-top:1.5rem;padding:1rem;background:var(--bg);border-radius:8px;font-size:.8rem;color:var(--muted);line-height:1.7'>"
-     +"<strong style='color:var(--accent)'>Proxy URL in use:</strong><br>"
-     +"<code style='color:var(--text);font-size:.75rem;word-break:break-all'>"+CONFIG.proxyUrl+"?type="+CONFIG.sheetType+"</code><br><br>"
-     +"<strong style='color:var(--accent)'>Sheet type parameter:</strong> <code>"+CONFIG.sheetType+"</code><br>"
-     +"Change <code>CONFIG.sheetType</code> in the HTML source if your proxy uses a different parameter.</div>";
-  h += "</div>";
-  el.innerHTML = h;
-
-  document.getElementById("reload-btn").addEventListener("click", function(){ autoLoad(); });
-  document.getElementById("file-upload").addEventListener("change", function(e){
-    var file = e.target.files[0]; if(!file) return;
-    var reader = new FileReader();
-    reader.onload = function(ev){
-      var wb = XLSX.read(new Uint8Array(ev.target.result), { type:"array" });
-      S.horses = parseHorseXLSX(wb);
-      showView("dashboard");
-    };
-    reader.readAsArrayBuffer(file);
-  });
-  el.querySelectorAll(".dl-btn").forEach(function(b){
-    b.addEventListener("click", function(){
-      var yr = currentYear();
-      var list = b.dataset.type === "year"
-        ? S.horses.filter(function(h){ return h.year === yr; })
-        : S.horses;
-      var data = list.map(function(h){ return { Horse:h.horse, Owner:h.owner, "CoWN Number":h.cownNum, Rider:h.rider, Year:h.year, Email:h.email, Phone:h.phone, Sent:h.sentRaw }; });
-      var ws = XLSX.utils.json_to_sheet(data);
-      var wb2 = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb2, ws, "Licenses");
-      XLSX.writeFile(wb2, "CoWN_HorseLicenses_"+b.dataset.type+".xlsx");
-    });
-  });
-}
-
-// ===== LICENSE CARD HTML =====
-function buildLicenseHTML(h){
-  return "<div class='license-card' style='"
-    +"border:2px solid #D4A04A;border-radius:10px;padding:1.25rem 1.5rem;"
-    +"background:#fff;max-width:480px;margin:0 auto;font-family:Source Sans 3,sans-serif;"
-    +"box-shadow:0 2px 10px rgba(0,0,0,.12)'>"
-
-    // Header row
-    +"<div style='display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #D4A04A;padding-bottom:.75rem;margin-bottom:.75rem'>"
-    +"<img src='"+LOGO_IMG+"' alt='CoWN' style='height:42px;border-radius:4px'>"
-    +"<div style='text-align:right'>"
-    +"<div style='font-family:Oswald,sans-serif;font-size:1.1rem;font-weight:700;color:#1a1a2e;letter-spacing:.04em'>HORSE LICENSE</div>"
-    +"<div style='font-size:.85rem;color:#888;margin-top:2px'>CoWN Stock Horse Association</div>"
-    +"</div></div>"
-
-    // Main info grid
-    +"<div style='display:grid;grid-template-columns:1fr 1fr;gap:.6rem .5rem;font-size:.9rem'>"
-
-    +"<div><div style='font-size:.7rem;color:#999;text-transform:uppercase;letter-spacing:.05em'>Horse</div>"
-    +"<div style='font-weight:700;font-size:1rem;color:#1a1a2e'>"+esc(h.horse)+"</div></div>"
-
-    +"<div><div style='font-size:.7rem;color:#999;text-transform:uppercase;letter-spacing:.05em'>License Year</div>"
-    +"<div style='font-weight:700;font-size:1rem;color:#D4A04A'>"+h.year+"</div></div>"
-
-    +"<div><div style='font-size:.7rem;color:#999;text-transform:uppercase;letter-spacing:.05em'>Owner</div>"
-    +"<div style='font-weight:600;color:#1a1a2e'>"+esc(h.owner)
-    +(h.ownerCownNum ? "<span style='font-size:.75rem;color:#aaa;margin-left:6px'>CoWN #"+esc(h.ownerCownNum)+"</span>" : "")
-    +"</div></div>"
-
-    +"<div><div style='font-size:.7rem;color:#999;text-transform:uppercase;letter-spacing:.05em'>Horse #</div>"
-    +"<div style='font-weight:600;color:#1a1a2e'>"+(h.horseNum||"—")+"</div></div>"
-
-    +(h.rider ? "<div style='grid-column:1/-1'><div style='font-size:.7rem;color:#999;text-transform:uppercase;letter-spacing:.05em'>Rider</div>"
-    +"<div style='font-weight:600;color:#1a1a2e'>"+esc(h.rider)
-    +(h.riderCownNum ? "<span style='font-size:.75rem;color:#aaa;margin-left:6px'>CoWN #"+esc(h.riderCownNum)+"</span>" : "")
-    +"</div></div>" : "")
-
-    +(h.licNum ? "<div style='grid-column:1/-1'><div style='font-size:.7rem;color:#999;text-transform:uppercase;letter-spacing:.05em'>License #</div>"
-    +"<div style='font-weight:600;color:#1a1a2e;font-family:monospace'>"+esc(h.licNum)+"</div></div>" : "")
-
-    +"</div>"
-
-    // Footer
-    +"<div style='border-top:1px solid #e8e0d0;margin-top:.75rem;padding-top:.6rem;font-size:.7rem;color:#aaa;display:flex;justify-content:space-between'>"
-    +"<span>Colorado, Wyoming &amp; Nebraska Stock Horse Association</span>"
-    +"<span>www.cownsh.com</span>"
-    +"</div></div>";
-}
-
-// ===== MODALS =====
-function showLicenseModal(h){
-  var root = document.getElementById("modal-root");
-  var html = "<div class='modal-overlay' id='lic-modal'><div class='modal'>";
-  html += buildLicenseHTML(h);
-  html += "<div class='btn-row' style='margin-top:1rem'>";
-  html += "<button class='btn btn-dark' id='lic-close'>Close</button>";
-  html += " <button class='btn btn-accent' id='lic-print'>&#128424; Print / Save PDF</button>";
-  if(S.adminUnlocked && h.riderEmail)
-    html += " <button class='btn btn-green' id='lic-email' data-idx='"+h.rowIndex+"'>&#9993; Send License</button>";
-  if(S.adminUnlocked && !h.riderEmail)
-    html += " <span style='font-size:.75rem;color:var(--red)'>No email — owner not matched in membership</span>";
-  html += "</div></div></div>";
-  root.innerHTML = html;
-
-  document.getElementById("lic-close").addEventListener("click", function(){ root.innerHTML=""; });
-  document.getElementById("lic-modal").addEventListener("click", function(e){ if(e.target===this) root.innerHTML=""; });
-  document.getElementById("lic-print").addEventListener("click", function(){
-    var win = window.open("","","width=600,height=700");
-    win.document.write("<!DOCTYPE html><html><head>"
-      +"<link href='https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Source+Sans+3:wght@400;600&display=swap' rel='stylesheet'>"
-      +"<style>body{font-family:'Source Sans 3',sans-serif;padding:2rem;background:#fff}"
-      +"@media print{.license-card{-webkit-print-color-adjust:exact;print-color-adjust:exact}}"
-      +"</style></head><body>");
-    win.document.write(buildLicenseHTML(h));
-    win.document.write("</body></html>");
-    win.document.close();
-    setTimeout(function(){ win.print(); }, 500);
-  });
-
-  var emailBtn = document.getElementById("lic-email");
-  if(emailBtn) emailBtn.addEventListener("click", function(){ sendLicenseEmail(parseInt(this.dataset.idx), this); });
-}
-
-function showDetailModal(h){
-  var root = document.getElementById("modal-root");
-  var html = "<div class='modal-overlay' id='det-modal'><div class='modal'>";
-  html += "<h3 style='font-family:Oswald;color:var(--accent)'>"+esc(h.horse)+"</h3>";
-  html += "<table style='margin:.75rem 0;font-size:.85rem'><tbody>";
-  html += "<tr><td style='color:var(--muted);padding-right:1rem'>Owner</td><td>"+esc(h.owner)+ownerBadge(h)+"</td></tr>";
-  html += "<tr><td style='color:var(--muted)'>Owner CoWN #</td><td>"+(h.ownerCownNum||"<span style='color:var(--red)'>Not found in membership</span>")+"</td></tr>";
-  html += "<tr><td style='color:var(--muted)'>Rider Email</td><td>"+(h.riderEmail||"<span style='color:var(--red)'>Not found</span>")+"</td></tr></tr>";
-  if(h.rider){
-    html += "<tr><td style='color:var(--muted)'>Rider</td><td>"+esc(h.rider)+"</td></tr>";
-    html += "<tr><td style='color:var(--muted)'>Rider CoWN #</td><td>"+(h.riderCownNum||"<span style='color:var(--muted)'>—</span>")+"</td></tr>";
-  }
-  html += "<tr><td style='color:var(--muted)'>Horse #</td><td>"+(h.horseNum||"—")+"</td></tr>";
-  html += "<tr><td style='color:var(--muted)'>Year</td><td><span class='badge badge-year'>"+h.year+"</span></td></tr>";
-  if(h.licNum) html += "<tr><td style='color:var(--muted)'>License #</td><td><code>"+esc(h.licNum)+"</code></td></tr>";
-  html += "<tr><td style='color:var(--muted)'>License Status</td><td>"+sentBadge(h)+"</td></tr>";
-  html += "</tbody></table>";
-  html += "<div class='btn-row'><button class='btn btn-dark' id='det-close'>Close</button>"
-        +" <button class='btn btn-accent' id='det-view' data-idx='"+h.rowIndex+"'>View License</button></div>";
-  html += "</div></div>";
-  root.innerHTML = html;
-  document.getElementById("det-close").addEventListener("click", function(){ root.innerHTML=""; });
-  document.getElementById("det-modal").addEventListener("click", function(e){ if(e.target===this) root.innerHTML=""; });
-  document.getElementById("det-view").addEventListener("click", function(){
-    var idx = parseInt(this.dataset.idx);
-    var horse = S.horses.find(function(h){ return h.rowIndex === idx; });
-    if(horse) showLicenseModal(horse);
-  });
-}
-
-// ===== EMAIL =====
-function sendLicenseEmail(rowIdx, btn){
-  var horse = S.horses.find(function(h){ return h.rowIndex === rowIdx; });
-  if(!horse){ alert("License not found"); return; }
-  if(!horse.riderEmail){ alert("No email address on file."); return; }
-  var orig = btn.textContent;
-  btn.textContent = "Sending..."; btn.disabled = true;
-  fetch(CONFIG.proxyUrl + "?action=sendLicense&rowIdx="+rowIdx+"&ts="+Date.now())
-    .then(function(r){ return r.json(); })
-    .then(function(data){
-      if(data.success){
-        btn.textContent = "Sent!"; btn.classList.add("btn-green");
-        horse.sentStatus = "sent"; horse.sentRaw = "sent";
-        setTimeout(function(){ btn.textContent = orig; btn.disabled = false; btn.classList.remove("btn-green"); }, 3000);
-      } else {
-        btn.textContent = "Failed";
-        alert("Error: "+(data.error||"Unknown error"));
-        setTimeout(function(){ btn.textContent = orig; btn.disabled = false; }, 2000);
-      }
-    })
-    .catch(function(e){
-      btn.textContent = "Error";
-      alert("Network error: "+e.message);
-      setTimeout(function(){ btn.textContent = orig; btn.disabled = false; }, 2000);
-    });
-}
-
-function sendBatchLicenses(rowIdxs, btn){
-  var orig = btn.textContent;
-  var total = rowIdxs.length, sent = 0, failed = 0, failedNames = [];
-  btn.disabled = true;
-  function sendNext(i){
-    if(i >= total){
-      btn.textContent = "Done! Sent "+sent+"/"+total;
-      if(failed > 0) alert(failed+" failed:\n"+failedNames.join("\n"));
-      setTimeout(function(){ btn.textContent = orig; btn.disabled = false; }, 4000);
-      return;
+function logLicenseSent(horse) {
+  try {
+    var ss = SpreadsheetApp.openById(HORSE_SHEET_ID);
+    var sheet = ss.getSheetByName(HORSE_SHEET_NAME);
+    var headers = sheet.getRange(1, 1, 1, sheet.getMaxColumns()).getValues()[0];
+    var sentCol = -1;
+    for (var i = 0; i < headers.length; i++) {
+      if (String(headers[i]).toLowerCase().trim() === 'sent') { sentCol = i; break; }
     }
-    var idx = rowIdxs[i];
-    var horse = S.horses.find(function(h){ return h.rowIndex === idx; });
-    btn.textContent = "Sending "+(i+1)+"/"+total+(horse?" — "+horse.horse:"")+"...";
-    fetch(CONFIG.proxyUrl + "?action=sendLicense&rowIdx="+idx+"&ts="+Date.now())
-      .then(function(r){ return r.json(); })
-      .then(function(data){
-        if(data.success){ sent++; if(horse){ horse.sentStatus="sent"; horse.sentRaw="sent"; } }
-        else { failed++; failedNames.push((horse?horse.horse+"  ("+horse.owner+")":"#"+idx)+": "+(data.error||"error")); }
-        setTimeout(function(){ sendNext(i+1); }, 800);
-      })
-      .catch(function(e){
-        failed++; failedNames.push((horse?horse.horse:"#"+idx)+": network error");
-        setTimeout(function(){ sendNext(i+1); }, 800);
-      });
-  }
-  sendNext(0);
+    if (sentCol >= 0) {
+      var sheetRow = horse.rowIndex + 2; // +1 for header row, +1 for 1-based sheet rows
+      var now = new Date();
+      sheet.getRange(sheetRow, sentCol+1).setValue('sent '+(now.getMonth()+1)+'/'+now.getDate()+'/'+now.getFullYear());
+    }
+  } catch(e) { console.log('Log license error:', e); }
 }
 
-// ===== LOAD =====
-function autoLoad(){
-  showView("loading");
-  fetch(CONFIG.proxyUrl + "?type=" + CONFIG.sheetType + "&ts=" + Date.now())
-    .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
-    .then(function(data){
-      if(!data || !data.horses) throw new Error("Unexpected response — missing horses array.");
-      S.horses = parseHorseJSON(data);
-      showView("lookup");
-    })
-    .catch(function(e){
-      console.error("Load error:", e);
-      document.getElementById("loading-view").innerHTML =
-        "<div class='card'>"
-        +"<p class='empty' style='color:var(--red)'>Could not load from Google Drive.</p>"
-        +"<p style='text-align:center;font-size:.8rem;color:var(--muted);margin-top:.5rem'>"+esc(e.message)+"</p>"
-        +"<div class='btn-row' style='justify-content:center;margin-top:1rem'>"
-        +"<button class='btn btn-accent' onclick='autoLoad()'>Retry</button>"
-        +"<label class='btn btn-dark' style='cursor:pointer'>Upload xlsx Instead"
-        +"<input type='file' accept='.xlsx,.xls,.csv' id='file-upload-fallback' style='display:none'></label>"
-        +"</div>"
-        +"<p style='text-align:center;margin-top:.75rem;font-size:.75rem;color:var(--muted)'>"
-        +"Note: uploading a file skips the member merge.</p>"
-        +"</div>";
-      var fu = document.getElementById("file-upload-fallback");
-      if(fu) fu.addEventListener("change", function(ev){
-        var file = ev.target.files[0]; if(!file) return;
-        var reader = new FileReader();
-        reader.onload = function(e2){
-          var wb = XLSX.read(new Uint8Array(e2.target.result), { type:"array" });
-          S.horses = parseHorseXLSX(wb);
-          showView("lookup");
-        };
-        reader.readAsArrayBuffer(file);
-      });
-    });
+// ===== TEST FUNCTIONS =====
+
+function testSendOne() {
+  var r = sendSingleCard(300); // change CoWN # to test a membership card
+  Logger.log(r);
 }
 
-// Set logo and boot
-document.getElementById("hdr-logo").src = LOGO_IMG;
-autoLoad();
-</script>
-</body>
-</html>
+function testSendLicense() {
+  var r = sendSingleLicense(1); // change row index to test a horse license
+  Logger.log(r);
+}
+
+function testMemberIndex() {
+  var idx = buildMemberIndex();
+  var keys = Object.keys(idx);
+  Logger.log('Member index: ' + keys.length + ' name entries');
+  Logger.log('Sample: ' + keys[0] + ' → ' + JSON.stringify(idx[keys[0]]));
+}
+
+function testHorseHeaders() {
+  var ss = SpreadsheetApp.openById(HORSE_SHEET_ID);
+  var sheet = ss.getSheetByName(HORSE_SHEET_NAME);
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  Logger.log('Horse sheet headers: ' + JSON.stringify(headers));
+  Logger.log('Row count: ' + (sheet.getLastRow() - 1));
+}
+
+
+function testHorseLoad() {
+  var idx = buildMemberIndex();
+  var horses = getHorseLicenses(idx);
+  Logger.log('Loaded ' + horses.length + ' horse licenses');
+  if (horses.length) Logger.log('First: ' + JSON.stringify(horses[0]));
+
+  // Report any names that didn't match
+  var noOwner = horses.filter(function(h){ return !h.ownerFound; });
+  var noRider = horses.filter(function(h){ return h.rider && !h.riderFound; });
+  Logger.log('Owners NOT matched in membership (' + noOwner.length + '): '
+    + noOwner.map(function(h){ return '"' + h.owner + '"'; }).join(', '));
+  Logger.log('Riders NOT matched in membership (' + noRider.length + '): '
+    + noRider.map(function(h){ return '"' + h.rider + '"'; }).join(', '));
+}
